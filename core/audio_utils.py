@@ -1,6 +1,8 @@
 """오디오 처리 유틸리티 (build_shorts.py에서 복사)"""
 
+import shlex
 import subprocess
+import sys
 import json
 import os
 import numpy as np
@@ -9,9 +11,13 @@ import soundfile as sf
 
 def run(cmd, desc=""):
     """ffmpeg 명령 실행"""
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+    if sys.platform == "win32":
+        args = cmd
+    else:
+        args = shlex.split(cmd)
+    result = subprocess.run(args, capture_output=True, text=True, encoding="utf-8")
     if result.returncode != 0:
-        raise RuntimeError(f"ffmpeg 에러: {result.stderr[:500]}")
+        raise RuntimeError(f"ffmpeg 에러: {result.stderr[-1000:]}")
     return result
 
 
@@ -120,7 +126,7 @@ def build_aligned_narration(temp_dir, sentences, clip_starts, total_dur):
         wav, _ = sf.read(fast_path)
         sent_dur = len(wav) / sr
 
-        offset = clip_starts[i] + 0.15
+        offset = clip_starts[i]
         start_sample = int(offset * sr)
         end_sample = start_sample + len(wav)
 

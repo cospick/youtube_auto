@@ -1,0 +1,51 @@
+# Nano Banana 2 Prompt Guide (Google Official)
+
+## Core Principle
+Narrative over Keywords: Describe the scene like a story, don't just list keywords.
+The model's strength lies in language understanding — descriptive paragraphs outperform disconnected word lists.
+
+## Recommended Prompt Structure
+Write prompts as narrative descriptions combining:
+- Specific scene details and context
+- Camera/photography terminology (for realism)
+- Lighting and mood descriptions
+- Fine details and textures
+- Desired composition and framing
+
+## Photography & Realism
+- Reference camera angles, lens types (e.g., 85mm portrait lens), lighting conditions
+- Specify shot type: close-up, wide shot, portrait, aerial
+- Describe subject with specific physical details
+- Note environmental context and setting
+- Include lighting type: golden hour, soft diffused, dramatic side-lighting, studio
+- Mention camera/lens details for authenticity
+- Define mood and atmosphere explicitly
+
+## People & Portraits
+- Be explicit about physical characteristics, expressions, and posture
+- Use photography terms: portrait orientation, 85mm bokeh, shallow depth of field
+- Describe clothing, age, cultural context (e.g., "a young Korean woman")
+- Specify emotional tone and actions
+- Include environmental setting and background details
+
+## Stylized Content
+- Clearly state the desired aesthetic: cinematic, anime, minimalist, etc.
+- Define line style, shading approach, color palette
+- Specify art medium: digital painting, watercolor, 3D render, etc.
+
+## Quality & Detail Modifiers
+- General: high-quality, beautiful, detailed, professional
+- Photography: 4K, HDR, studio lighting, DSLR quality
+- Artistic: by a professional artist, masterful composition
+- Texture: fine details, realistic textures, sharp focus
+
+## Key Rules
+- Write NARRATIVE descriptions, not keyword lists
+- Keep prompts descriptive with adjectives and adverbs
+- Describe how the scene should be photographed or composed
+- Include context, environment, lighting, materials, and textures
+- Use complete sentences structured as narrative description
+- Do NOT include text/words/letters in image prompts
+- Vertical composition (9:16) for YouTube Shorts
+- Each prompt should have ONE clear main subject
+- Start with the main subject, then expand to setting and mood

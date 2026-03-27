@@ -15,6 +15,54 @@
 
         <div id="preview-grid" class="preview-grid"></div>
 
+        <div class="card" style="margin-top: 1.5rem;">
+            <h2 style="margin-bottom: 0.8rem;">영상 모드 선택</h2>
+            <div class="style-card-grid" style="grid-template-columns: repeat(3, 1fr);">
+                <div class="style-card selected" data-value="kenburns" onclick="selectVideoMode(this)">
+                    <div class="style-card-preview" style="background: linear-gradient(135deg, #475569, #94a3b8)">
+                        <span class="style-card-icon" style="font-size: 1.2rem;">Ken Burns</span>
+                    </div>
+                    <span class="style-card-name">Ken Burns (무료)</span>
+                </div>
+                <div class="style-card" data-value="hailuo" onclick="selectVideoMode(this)">
+                    <div class="style-card-preview" style="background: linear-gradient(135deg, #7c3aed, #2563eb)">
+                        <span class="style-card-icon" style="font-size: 1.2rem;">Hailuo 02</span>
+                    </div>
+                    <span class="style-card-name">512P · 약 150원</span>
+                </div>
+                <div class="style-card" data-value="hailuo23" onclick="selectVideoMode(this)">
+                    <div class="style-card-preview" style="background: linear-gradient(135deg, #6d28d9, #4f46e5)">
+                        <span class="style-card-icon" style="font-size: 1.2rem;">Hailuo 2.3</span>
+                    </div>
+                    <span class="style-card-name">768P · 약 285원</span>
+                </div>
+                <div class="style-card" data-value="wan" onclick="selectVideoMode(this)">
+                    <div class="style-card-preview" style="background: linear-gradient(135deg, #059669, #10b981)">
+                        <span class="style-card-icon" style="font-size: 1.2rem;">Wan 2.1</span>
+                    </div>
+                    <span class="style-card-name">480P · 약 300원</span>
+                </div>
+                <div class="style-card" data-value="kling" onclick="selectVideoMode(this)">
+                    <div class="style-card-preview" style="background: linear-gradient(135deg, #dc2626, #f97316)">
+                        <span class="style-card-icon" style="font-size: 1.2rem;">Kling 2.1</span>
+                    </div>
+                    <span class="style-card-name">1080P · 약 420원</span>
+                </div>
+                <div class="style-card" data-value="kling26" onclick="selectVideoMode(this)">
+                    <div class="style-card-preview" style="background: linear-gradient(135deg, #e11d48, #fb923c)">
+                        <span class="style-card-icon" style="font-size: 1.2rem;">Kling 2.6</span>
+                    </div>
+                    <span class="style-card-name">1080P · 약 525원</span>
+                </div>
+                <div class="style-card" data-value="veo" onclick="selectVideoMode(this)">
+                    <div class="style-card-preview" style="background: linear-gradient(135deg, #1d4ed8, #06b6d4)">
+                        <span class="style-card-icon" style="font-size: 1.2rem;">Veo 3.1</span>
+                    </div>
+                    <span class="style-card-name">1080P · 약 750원</span>
+                </div>
+            </div>
+        </div>
+
         <div class="btn-group center">
             <a href="/" class="btn-secondary">처음으로</a>
             <button id="btn-confirm" class="btn-primary" onclick="confirmAndRender()">

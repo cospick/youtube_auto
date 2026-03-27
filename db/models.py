@@ -19,11 +19,16 @@ class Job(Base):
     # 입력 파라미터
     topic = Column(Text, default="")
     style = Column(String, default="cinematic")
+    video_mode = Column(String, default="kenburns")
     tts_engine = Column(String, default="edge")
     tts_speed = Column(Float, default=1.1)
+    voice_id = Column(String, nullable=True)
+    emotion = Column(String, nullable=True)
     title = Column(Text, default="")
     script_json = Column(Text, default="[]")
     bgm_volume = Column(Float, default=0.12)
+    bgm_filename = Column(String, nullable=True)
+    bgm_start_sec = Column(Float, default=0.0)
 
     # 출력
     video_path = Column(String, nullable=True)

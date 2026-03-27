@@ -9,19 +9,36 @@
 <body>
     <div class="container">
         <header>
-            <h1>영상 제작 중</h1>
+            <h1 id="page-title">준비 중...</h1>
         </header>
 
         <section class="card">
-            <div class="progress-container">
+            <!-- 이미지 생성 단계: 카드 그리드 (JS에서 skeleton 카드 삽입) -->
+            <div id="image-progress-grid" class="preview-grid hidden"></div>
+
+            <!-- 영상 제작 단계: 비디오 로딩 플레이스홀더 -->
+            <div id="video-loading-section" class="hidden">
+                <div class="video-placeholder">
+                    <div class="skeleton-shimmer"></div>
+                    <div class="video-loading-overlay">
+                        <div class="spinner"></div>
+                        <p class="video-loading-text">영상 제작 중...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 프로그레스 바 -->
+            <div class="progress-container" id="progress-bar-section">
                 <div class="progress-bar">
                     <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
                 </div>
-                <p class="progress-text">
-                    <span id="progress-percent">0%</span>
-                    <span id="progress-step">준비 중...</span>
-                </p>
             </div>
+
+            <!-- 진행 상태 텍스트 -->
+            <p class="progress-text">
+                <span id="progress-percent">0%</span>
+                <span id="progress-step">준비 중...</span>
+            </p>
 
             <!-- 완료 시 표시 -->
             <div id="completed-section" class="hidden">

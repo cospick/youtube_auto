@@ -11,69 +11,294 @@
         <header>
             <h1>AI 쇼츠 자동 제작</h1>
             <p class="subtitle">주제만 입력하면 영상이 완성됩니다</p>
+            <a href="/static/history.html" class="btn-secondary btn-small">작업 이력</a>
+            <a href="https://github.com/orioncactus/pretendard/releases" target="_blank" rel="noopener" class="btn-secondary btn-small">Pretendard 폰트 다운로드</a>
         </header>
 
-        <!-- Step 1: 주제 입력 -->
-        <section id="step-input" class="card">
-            <h2>1. 주제 & 설정</h2>
+        <!-- 타임라인 -->
+        <nav id="workflow-timeline" class="timeline">
+            <ol class="timeline-track">
+                <li class="timeline-item active" data-step="0">
+                    <span class="timeline-dot"></span>
+                    <span class="timeline-label">주제</span>
+                </li>
+                <li class="timeline-item" data-step="1">
+                    <span class="timeline-dot"></span>
+                    <span class="timeline-label">제목</span>
+                </li>
+                <li class="timeline-item" data-step="2">
+                    <span class="timeline-dot"></span>
+                    <span class="timeline-label">나레이션</span>
+                </li>
+                <li class="timeline-item" data-step="3">
+                    <span class="timeline-dot"></span>
+                    <span class="timeline-label">스타일</span>
+                </li>
+                <li class="timeline-item" data-step="4">
+                    <span class="timeline-dot"></span>
+                    <span class="timeline-label">음성</span>
+                </li>
+                <li class="timeline-item" data-step="5">
+                    <span class="timeline-dot"></span>
+                    <span class="timeline-label">BGM</span>
+                </li>
+                <li class="timeline-item" data-step="6">
+                    <span class="timeline-dot"></span>
+                    <span class="timeline-label">확인</span>
+                </li>
+            </ol>
+        </nav>
 
-            <div class="form-group">
-                <label for="topic">주제</label>
-                <input type="text" id="topic" placeholder="예: 피부 각질 제거 팁" maxlength="200">
+        <!-- Step 1: 주제 설정 -->
+        <section id="step-input" class="card step-section" data-step-index="0">
+            <div class="step-collapsed-header" onclick="toggleStepExpand(0)">
+                <span class="step-check">&#10003;</span>
+                <span class="step-collapsed-title">1. 주제: <span class="step-summary" id="summary-0"></span></span>
+                <span class="step-expand-icon">&#9660;</span>
             </div>
+            <div class="step-body">
+                <h2>1. 주제 설정</h2>
 
-            <div class="form-row">
                 <div class="form-group">
-                    <label for="style">이미지 스타일</label>
-                    <select id="style">
-                        <option value="cinematic">시네마틱</option>
-                        <option value="realistic">실사</option>
-                        <option value="anime">애니메이션</option>
-                        <option value="3d">3D 렌더</option>
-                        <option value="illustration">일러스트</option>
+                    <label for="category">카테고리</label>
+                    <select id="category" onchange="toggleCategoryFields()">
+                        <option value="cosmetics">화장품</option>
+                        <option value="general">일반</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label for="tts-engine">TTS 엔진</label>
-                    <select id="tts-engine">
-                        <option value="edge">Edge TTS (무료)</option>
-                        <option value="typecast">Typecast (고품질)</option>
-                        <option value="qwen">Qwen (로컬)</option>
-                    </select>
+                    <label for="topic">주제</label>
+                    <input type="text" id="topic" placeholder="예: 여름철 모공 관리 팁" maxlength="200">
                 </div>
+
+                <!-- 화장품 카테고리 전용 필드 -->
+                <div id="cosmetics-fields">
+                    <div class="form-group">
+                        <label for="pain-point">타겟 고민 / 페인포인트</label>
+                        <input type="text" id="pain-point" placeholder="예: 모공 넓어짐, 칙칙한 피부톤" maxlength="100">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="ingredient">핵심 성분 (선택)</label>
+                            <input type="text" id="ingredient" placeholder="예: 나이아신아마이드" maxlength="100">
+                        </div>
+                        <div class="form-group">
+                            <label for="mention-type">제품 언급 방식</label>
+                            <select id="mention-type">
+                                <option value="comment">댓글 유도</option>
+                                <option value="direct">직접 언급</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="btn-generate" class="btn-primary" onclick="generateTitles()">
+                    제목 생성하기
+                </button>
             </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="tts-speed">TTS 속도: <span id="speed-val">1.1</span>x</label>
-                    <input type="range" id="tts-speed" min="0.8" max="1.5" step="0.1" value="1.1">
-                </div>
-
-                <div class="form-group">
-                    <label for="bgm-volume">BGM 볼륨: <span id="bgm-val">12</span>%</label>
-                    <input type="range" id="bgm-volume" min="0" max="50" step="1" value="12">
-                </div>
-            </div>
-
-            <button id="btn-generate" class="btn-primary" onclick="generateScript()">
-                대본 생성하기
-            </button>
         </section>
 
-        <!-- Step 2: 대본 확인/수정 -->
-        <section id="step-script" class="card hidden">
-            <h2>2. 대본 확인</h2>
-
-            <div class="form-group">
-                <label for="title-text">제목</label>
-                <input type="text" id="title-text" maxlength="16">
+        <!-- Step 2: 제목 선택 -->
+        <section id="step-titles" class="card hidden step-section" data-step-index="1">
+            <div class="step-collapsed-header" onclick="toggleStepExpand(1)">
+                <span class="step-check">&#10003;</span>
+                <span class="step-collapsed-title">2. 제목: <span class="step-summary" id="summary-1"></span></span>
+                <span class="step-expand-icon">&#9660;</span>
             </div>
+            <div class="step-body">
+                <h2>2. 제목 선택</h2>
+                <p class="subtitle">마음에 드는 제목을 클릭하세요</p>
+                <div id="title-options"></div>
+                <div class="btn-group">
+                    <button class="btn-secondary" onclick="generateTitles()">다시 생성</button>
+                </div>
+            </div>
+        </section>
 
-            <div id="script-lines"></div>
+        <!-- Step 3: 나레이션 확인 -->
+        <section id="step-narration" class="card hidden step-section" data-step-index="2">
+            <div class="step-collapsed-header" onclick="toggleStepExpand(2)">
+                <span class="step-check">&#10003;</span>
+                <span class="step-collapsed-title">3. 나레이션: <span class="step-summary" id="summary-2"></span></span>
+                <span class="step-expand-icon">&#9660;</span>
+            </div>
+            <div class="step-body">
+                <h2>3. 나레이션 확인</h2>
+                <div class="form-group">
+                    <label>선택된 제목</label>
+                    <input type="text" id="selected-title-display" readonly>
+                </div>
+                <div id="narration-lines"></div>
+                <div class="btn-group">
+                    <button class="btn-secondary" onclick="regenerateNarration()">다시 생성</button>
+                    <button class="btn-primary" onclick="approveNarration()">나레이션 확정</button>
+                </div>
+            </div>
+        </section>
 
-            <div class="btn-group">
-                <button class="btn-secondary" onclick="generateScript()">다시 생성</button>
+        <!-- Step 4: 이미지 스타일 + 프롬프트 -->
+        <section id="step-style" class="card hidden step-section" data-step-index="3">
+            <div class="step-collapsed-header" onclick="toggleStepExpand(3)">
+                <span class="step-check">&#10003;</span>
+                <span class="step-collapsed-title">4. 스타일: <span class="step-summary" id="summary-3"></span></span>
+                <span class="step-expand-icon">&#9660;</span>
+            </div>
+            <div class="step-body">
+                <h2>4. 이미지 스타일</h2>
+
+                <div class="form-group">
+                    <label>이미지 스타일</label>
+                    <input type="hidden" id="style" value="cinematic">
+                    <div class="style-card-grid">
+                        <div class="style-card selected" data-value="cinematic" onclick="selectStyle(this)">
+                            <div class="style-card-preview" style="background: linear-gradient(135deg, #b8860b, #ffd700)">
+                                <span class="style-card-icon">🎬</span>
+                            </div>
+                            <span class="style-card-name">시네마틱</span>
+                        </div>
+                        <div class="style-card" data-value="realistic" onclick="selectStyle(this)">
+                            <div class="style-card-preview" style="background: linear-gradient(135deg, #2c3e50, #5d8aa8)">
+                                <span class="style-card-icon">📷</span>
+                            </div>
+                            <span class="style-card-name">실사</span>
+                        </div>
+                        <div class="style-card" data-value="anime" onclick="selectStyle(this)">
+                            <div class="style-card-preview" style="background: linear-gradient(135deg, #8b5cf6, #ec4899)">
+                                <span class="style-card-icon">🎨</span>
+                            </div>
+                            <span class="style-card-name">애니메이션</span>
+                        </div>
+                        <div class="style-card" data-value="3d" onclick="selectStyle(this)">
+                            <div class="style-card-preview" style="background: linear-gradient(135deg, #0d9488, #06b6d4)">
+                                <span class="style-card-icon">🧊</span>
+                            </div>
+                            <span class="style-card-name">3D 렌더</span>
+                        </div>
+                        <div class="style-card" data-value="illustration" onclick="selectStyle(this)">
+                            <div class="style-card-preview" style="background: linear-gradient(135deg, #ea580c, #facc15)">
+                                <span class="style-card-icon">✏️</span>
+                            </div>
+                            <span class="style-card-name">일러스트</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="generateImagePrompts()">이미지 프롬프트 생성</button>
+
+                <div id="image-prompt-result" class="hidden">
+                    <div class="form-group">
+                        <label for="title-text">제목</label>
+                        <input type="text" id="title-text" maxlength="16">
+                    </div>
+                    <div id="script-lines"></div>
+                    <div class="btn-group">
+                        <button class="btn-secondary" onclick="generateImagePrompts()">프롬프트 다시 생성</button>
+                        <button class="btn-primary" onclick="confirmImagePrompts()">다음: 음성 설정</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Step 5: TTS 설정 -->
+        <section id="step-tts" class="card hidden step-section" data-step-index="4">
+            <div class="step-collapsed-header" onclick="toggleStepExpand(4)">
+                <span class="step-check">&#10003;</span>
+                <span class="step-collapsed-title">5. 음성: <span class="step-summary" id="summary-4"></span></span>
+                <span class="step-expand-icon">&#9660;</span>
+            </div>
+            <div class="step-body">
+                <h2>5. 음성 설정</h2>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tts-engine">TTS 엔진</label>
+                        <select id="tts-engine">
+                            <option value="edge">Edge TTS (무료)</option>
+                            <option value="typecast">Typecast (고품질)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="tts-voice">음성 선택</label>
+                        <div class="voice-select-row">
+                            <select id="tts-voice"></select>
+                            <button type="button" id="voice-preview-btn" title="미리듣기">▶</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="emotion-section" class="form-group hidden">
+                    <label>감정/톤</label>
+                    <div id="emotion-buttons" class="emotion-btn-group">
+                        <p class="text-dim">성우를 선택하면 감정 목록이 표시됩니다.</p>
+                    </div>
+                    <input type="hidden" id="tts-emotion" value="normal">
+                </div>
+
+                <div class="form-group">
+                    <label for="tts-speed">TTS 속도: <span id="speed-val">1.0</span>배</label>
+                    <input type="range" id="tts-speed" min="0.5" max="2.0" step="0.1" value="1.0">
+                    <div class="range-ticks">
+                        <span style="position:absolute;left:0%">0.5배</span>
+                        <span style="position:absolute;left:33.3%">1배</span>
+                        <span style="position:absolute;left:66.7%">1.5배</span>
+                        <span style="position:absolute;right:0">2배</span>
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="confirmTtsSettings()">다음: BGM 설정</button>
+            </div>
+        </section>
+
+        <!-- Step 6: BGM 설정 -->
+        <section id="step-bgm" class="card hidden step-section" data-step-index="5">
+            <div class="step-collapsed-header" onclick="toggleStepExpand(5)">
+                <span class="step-check">&#10003;</span>
+                <span class="step-collapsed-title">6. BGM: <span class="step-summary" id="summary-5"></span></span>
+                <span class="step-expand-icon">&#9660;</span>
+            </div>
+            <div class="step-body">
+                <h2>6. BGM 설정</h2>
+
+                <div class="form-group">
+                    <label>BGM 선택</label>
+                    <div id="bgm-list" class="bgm-grid">
+                        <p class="text-dim">BGM 목록 로딩 중...</p>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bgm-volume">BGM 볼륨: <span id="bgm-val">12</span>%</label>
+                        <input type="range" id="bgm-volume" min="0" max="50" step="1" value="12">
+                    </div>
+
+                    <div id="bgm-start-section" class="form-group hidden">
+                        <label>BGM 시작 지점: <span id="bgm-start-val">0:00</span></label>
+                        <input type="range" id="bgm-start" min="0" max="100" step="0.1" value="0">
+                        <div class="bgm-start-input-row">
+                            <input type="number" id="bgm-start-sec" min="0" step="0.1" value="0" class="bgm-time-input">
+                            <span class="text-dim">초</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-primary" onclick="confirmBgmSettings()">다음: 최종 확인</button>
+            </div>
+        </section>
+
+        <!-- Step 7: 최종 확인 -->
+        <section id="step-confirm" class="card hidden step-section" data-step-index="6">
+            <div class="step-collapsed-header" onclick="toggleStepExpand(6)">
+                <span class="step-check">&#10003;</span>
+                <span class="step-collapsed-title">7. 확인 <span class="step-summary" id="summary-6"></span></span>
+                <span class="step-expand-icon">&#9660;</span>
+            </div>
+            <div class="step-body">
+                <h2>7. 최종 확인</h2>
+
+                <div id="confirm-summary"></div>
                 <button class="btn-primary" onclick="createJob()">이미지 생성 시작</button>
             </div>
         </section>

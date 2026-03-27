@@ -1,0 +1,38 @@
+# Imagen 4 Prompt Guide (Google Official)
+
+## Core Structure
+Combine three elements: Subject (main object/person) + Context/Background (setting) + Style (artistic approach).
+
+## Photography Techniques
+- Camera Proximity: close-up, zoomed out
+- Camera Position: aerial photo, from below
+- Lighting: natural lighting, dramatic lighting, warm/cold tones
+- Camera Settings: motion blur, soft focus, bokeh, portrait mode
+- Lens Types: 35mm, 50mm, fisheye, wide angle, macro
+- Film Types: black and white, polaroid
+
+## Photorealistic Guidelines
+- Portraits: 24-35mm lens, depth of field, film noir, duotone
+- Objects/Still Life: macro lens 60-105mm, high detail, precise focusing, controlled lighting
+- Motion: telephoto zoom 100-400mm, fast shutter speed, movement tracking
+- Landscapes: wide-angle 10-24mm, long exposure, sharp focus, smooth water/clouds
+
+## Quality Modifiers
+- General: high-quality, beautiful, stylized
+- Photography: 4K, HDR, studio photo, professional photography
+- Art: by a professional, detailed
+
+## Art Styles
+- Prefix: "A painting of..." or "A sketch of..."
+- Techniques: charcoal, pastel, digital art, art deco, technical pencil
+- Materials: "made of [material]", "in the shape of [object]"
+- Movements: impressionism, renaissance, pop art
+
+## Key Rules
+- Max prompt length: 480 tokens
+- Keep prompts descriptive with adjectives and adverbs
+- Use "portrait" for face-focused shots
+- Do NOT include text/words/letters in image prompts
+- Vertical composition (9:16) for YouTube Shorts
+- Start simple, iterate toward complexity
+- Each prompt should have ONE clear main subject

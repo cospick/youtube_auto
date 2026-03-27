@@ -17,6 +17,12 @@
     </div>
 
     <script>
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
     async function loadJobs() {
         const resp = await fetch('/api/jobs/');
         const jobs = await resp.json();
@@ -30,14 +36,27 @@
         list.innerHTML = jobs.map(job => `
             <div class="card job-card">
                 <div class="job-info">
-                    <span class="job-status status-${job.status}">${statusLabel(job.status)}</span>
-                    <span class="job-id">${job.job_id}</span>
+                    <span class="job-status status-${escapeHtml(job.status)}">${escapeHtml(statusLabel(job.status))}</span>
+                    <span class="job-id">${escapeHtml(job.job_id)}</span>
                     <span class="job-date">${new Date(job.created_at).toLocaleString('ko-KR')}</span>
                 </div>
-                <p class="job-step">${job.current_step}</p>
-                ${job.video_url ? `<a href="${job.video_url}" class="btn-small btn-primary" download>다운로드</a>` : ''}
+                <p class="job-step">${escapeHtml(job.current_step || '')}</p>
+                ${jobActions(job)}
             </div>
         `).join('');
+    }
+
+    function jobActions(job) {
+        if (job.video_url) {
+            return `<a href="${escapeHtml(job.video_url)}" class="btn-small btn-primary" download>다운로드</a>`;
+        }
+        if (job.status === 'preview_ready' || job.status === 'awaiting_confirmation') {
+            return `<a href="/static/preview.html?job=${escapeHtml(job.job_id)}" class="btn-small btn-secondary">미리보기</a>`;
+        }
+        if (['pending', 'generating_images', 'generating_tts', 'assembling_video'].includes(job.status)) {
+            return `<a href="/static/status.html?job=${escapeHtml(job.job_id)}" class="btn-small btn-secondary">진행 상태</a>`;
+        }
+        return '';
     }
 
     function statusLabel(status) {
