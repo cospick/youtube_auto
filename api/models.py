@@ -57,6 +57,7 @@ class TitleRequest(BaseModel):
     pain_point: Optional[str] = None
     ingredient: Optional[str] = None
     mention_type: Optional[str] = None
+    product_name: Optional[str] = None
 
 
 class TitleOption(BaseModel):
@@ -78,6 +79,7 @@ class NarrationRequest(BaseModel):
     pain_point: Optional[str] = None
     ingredient: Optional[str] = None
     mention_type: Optional[str] = None
+    product_name: Optional[str] = None
 
 
 class NarrationLine(BaseModel):

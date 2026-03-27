@@ -61,6 +61,19 @@ function toggleCategoryFields() {
     cosmeticsFields.style.display = category === 'cosmetics' ? 'block' : 'none';
 }
 
+function onTitleEdited(value) {
+    selectedTitle = value;
+}
+
+function toggleProductName() {
+    const mentionType = document.getElementById('mention-type').value;
+    const field = document.getElementById('product-name-field');
+    field.style.display = mentionType === 'direct' ? 'block' : 'none';
+    if (mentionType !== 'direct') {
+        document.getElementById('product-name').value = '';
+    }
+}
+
 function getCategoryPayload() {
     const category = document.getElementById('category').value;
     const payload = { category };
@@ -71,6 +84,10 @@ function getCategoryPayload() {
         if (painPoint) payload.pain_point = painPoint;
         if (ingredient) payload.ingredient = ingredient;
         payload.mention_type = mentionType;
+        if (mentionType === 'direct') {
+            const productName = document.getElementById('product-name').value.trim();
+            if (productName) payload.product_name = productName;
+        }
     }
     return payload;
 }

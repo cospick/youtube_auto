@@ -23,6 +23,7 @@ async def generate_titles_endpoint(request: TitleRequest):
             pain_point=request.pain_point,
             ingredient=request.ingredient,
             mention_type=request.mention_type,
+            product_name=request.product_name,
         )
         return TitleResponse(**result)
     except Exception as e:
@@ -36,6 +37,8 @@ async def generate_narration_endpoint(request: NarrationRequest):
     """Step 3: 선택된 제목 기반 나레이션 생성"""
     from core.gemini_client import generate_narration as gen
 
+    print(f"[DEBUG] narration request: mention_type={request.mention_type}, product_name={request.product_name}")
+
     try:
         result = await gen(
             topic=request.topic,
@@ -45,6 +48,7 @@ async def generate_narration_endpoint(request: NarrationRequest):
             pain_point=request.pain_point,
             ingredient=request.ingredient,
             mention_type=request.mention_type,
+            product_name=request.product_name,
         )
         return NarrationResponse(**result)
     except Exception as e:

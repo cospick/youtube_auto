@@ -12,7 +12,7 @@
             <h1>AI 쇼츠 자동 제작</h1>
             <p class="subtitle">주제만 입력하면 영상이 완성됩니다</p>
             <a href="/static/history.html" class="btn-secondary btn-small">작업 이력</a>
-            <a href="https://github.com/orioncactus/pretendard/releases" target="_blank" rel="noopener" class="btn-secondary btn-small">Pretendard 폰트 다운로드</a>
+            <a href="https://cactus.tistory.com/306" target="_blank" rel="noopener" class="btn-secondary btn-small">Pretendard 폰트 다운로드</a>
         </header>
 
         <!-- 타임라인 -->
@@ -85,11 +85,15 @@
                         </div>
                         <div class="form-group">
                             <label for="mention-type">제품 언급 방식</label>
-                            <select id="mention-type">
+                            <select id="mention-type" onchange="toggleProductName()">
                                 <option value="comment">댓글 유도</option>
                                 <option value="direct">직접 언급</option>
                             </select>
                         </div>
+                    </div>
+                    <div id="product-name-field" class="form-group" style="display:none;">
+                        <label for="product-name">제품명</label>
+                        <input type="text" id="product-name" placeholder="예: 닥터자르트 시카페어 크림" maxlength="100">
                     </div>
                 </div>
 
@@ -126,8 +130,8 @@
             <div class="step-body">
                 <h2>3. 나레이션 확인</h2>
                 <div class="form-group">
-                    <label>선택된 제목</label>
-                    <input type="text" id="selected-title-display" readonly>
+                    <label>선택된 제목 (수정 가능)</label>
+                    <input type="text" id="selected-title-display" maxlength="30" oninput="onTitleEdited(this.value)">
                 </div>
                 <div id="narration-lines"></div>
                 <div class="btn-group">

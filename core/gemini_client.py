@@ -47,6 +47,7 @@ def _build_category_context(
     pain_point: str = None,
     ingredient: str = None,
     mention_type: str = None,
+    product_name: str = None,
 ) -> str:
     """카테고리별 컨텍스트 문자열 생성"""
     if category != "cosmetics":
@@ -60,7 +61,11 @@ def _build_category_context(
     if mention_type == "comment":
         ctx += "제품 언급 방식: 댓글 유도 (제품명을 직접 말하지 않고 '궁금하면 댓글!' 등으로 유도)\n"
     elif mention_type == "direct":
-        ctx += "제품 언급 방식: 직접 언급 (성분명이나 제품을 직접 언급 가능)\n"
+        if product_name:
+            ctx += f"제품 언급 방식: 직접 언급\n"
+            ctx += f"[필수] 제품명 '{product_name}'을(를) 대본 6줄 중 최소 1줄에 반드시 포함해야 합니다. 이 규칙은 절대 생략할 수 없습니다.\n"
+        else:
+            ctx += "제품 언급 방식: 직접 언급 (성분명이나 제품을 직접 언급 가능)\n"
     return ctx
 
 
@@ -85,13 +90,14 @@ async def generate_titles(
     pain_point: str = None,
     ingredient: str = None,
     mention_type: str = None,
+    product_name: str = None,
 ) -> dict:
     """
     Gemini로 제목 3~4개 생성.
     반환: {"titles": [{"title": "...", "hook": "..."}, ...]}
     """
     client = get_client()
-    category_context = _build_category_context(category, pain_point, ingredient, mention_type)
+    category_context = _build_category_context(category, pain_point, ingredient, mention_type, product_name)
 
     prompt = f"""당신은 YouTube Shorts 전문 카피라이터입니다.
 다음 주제에 대해 시선을 사로잡는 한국어 제목을 4개 만들어주세요.
@@ -142,13 +148,14 @@ async def generate_narration(
     pain_point: str = None,
     ingredient: str = None,
     mention_type: str = None,
+    product_name: str = None,
 ) -> dict:
     """
     선택된 제목 기반으로 나레이션 생성.
     반환: {"lines": [{"text": "...", "role": "hook"}, ...]}
     """
     client = get_client()
-    category_context = _build_category_context(category, pain_point, ingredient, mention_type)
+    category_context = _build_category_context(category, pain_point, ingredient, mention_type, product_name)
 
     # 카테고리별 라인 지시 강화
     line_instructions = ""
@@ -160,7 +167,10 @@ async def generate_narration(
         if mention_type == "comment":
             line_instructions += "- Line 6(CTA)에서 반드시 '궁금하면 댓글!', '댓글로 알려드려요' 등으로 끝내세요. 제품명은 절대 직접 언급하지 마세요.\n"
         elif mention_type == "direct":
-            line_instructions += "- 대본에서 성분명이나 제품을 자연스럽게 직접 언급하세요.\n"
+            if product_name:
+                line_instructions += f"- [필수] Line 4~6 중 최소 1줄에 '{product_name}'이라는 제품명을 반드시 포함하세요. 성분명만 언급하고 제품명을 빠뜨리면 실패입니다.\n"
+            else:
+                line_instructions += "- 대본에서 성분명이나 제품을 자연스럽게 직접 언급하세요.\n"
 
     prompt = f"""당신은 YouTube Shorts 나레이션 작가입니다.
 아래 제목의 쇼츠 영상을 위한 나레이션 {num_lines}줄을 작성하세요.
