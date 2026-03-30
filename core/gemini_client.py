@@ -28,7 +28,6 @@ STYLE_SUFFIXES = {
     "realistic": "photorealistic, 8k, ultra-detailed, high resolution photography",
     "anime": "anime style, vibrant colors, Japanese animation, detailed illustration",
     "illustration": "digital illustration, artistic, painterly style, concept art",
-    "cinematic": "cinematic, dramatic lighting, film still, shallow depth of field",
 }
 
 MOTION_TYPES = ["zoom_in", "zoom_out", "pan_left", "pan_right", "pan_up", "pan_down"]
@@ -257,9 +256,6 @@ Image style: {style_desc}
 - Write prompts as NARRATIVE descriptions, not keyword lists.
 - Structure: Describe the scene like a story — subject, environment, lighting, mood.
 - When depicting people, ALWAYS specify "Korean" (e.g., "a young Korean woman", "a Korean man").
-- For scenes with PEOPLE: use natural, candid, everyday-life settings (cafe, bathroom mirror, living room, street). Never use studio lighting for people.
-- For scenes with PRODUCTS or INGREDIENTS: use either a clean studio-style product shot OR a natural in-use scene (hands applying cream, product on a shelf). Choose whichever fits the narration context better.
-- Describe what you WANT, not what to exclude (positive framing).
 - Keep each prompt under 60 words.
 - Do NOT include any text, words, letters, or watermarks.
 - Each prompt must describe ONE clear scene.
@@ -428,26 +424,29 @@ async def generate_all_images(
             step=f"이미지 생성 중... 0 / {total}장 완료",
         )
 
-    tasks = []
-    for i in range(total):
+    completed = 0
+
+    async def _generate_and_track(i):
+        nonlocal completed
         output_path = os.path.join(storage_dir, "images", f"img_{i:02d}.png")
-        tasks.append(generate_image(
+        result = await generate_image(
             prompt=lines[i]["image_prompt"],
             style=style,
             output_path=output_path,
             progress_callback=progress_callback,
             job_id=job_id,
-        ))
-
-    results = await asyncio.gather(*tasks)
-    image_paths = list(results)
-
-    if progress_callback:
-        progress_callback(
-            job_id=job_id,
-            status="generating_images",
-            progress=0.4,
-            step=f"이미지 생성 완료 ({total}/{total})",
         )
+        completed += 1
+        if progress_callback:
+            progress_callback(
+                job_id=job_id,
+                status="generating_images",
+                progress=0.05 + (completed / total) * 0.35,
+                step=f"이미지 생성 중... {completed} / {total}장 완료",
+            )
+        return result
+
+    results = await asyncio.gather(*[_generate_and_track(i) for i in range(total)])
+    image_paths = list(results)
 
     return image_paths

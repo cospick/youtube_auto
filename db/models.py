@@ -18,7 +18,7 @@ class Job(Base):
 
     # 입력 파라미터
     topic = Column(Text, default="")
-    style = Column(String, default="cinematic")
+    style = Column(String, default="realistic")
     video_mode = Column(String, default="kenburns")
     tts_engine = Column(String, default="edge")
     tts_speed = Column(Float, default=1.1)

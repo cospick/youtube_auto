@@ -211,6 +211,9 @@ async def regenerate_image_for_job(job_id: str, line_index: int, korean_request:
                 style=job.style,
                 output_path=output_path,
             )
+
+            job.status = "preview_ready"
+            db.commit()
         except Exception as e:
             mark_job_failed(job_id, f"이미지 재생성 실패: {str(e)}")
     finally:

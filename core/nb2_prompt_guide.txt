@@ -33,20 +33,11 @@ Write prompts as narrative descriptions combining:
 - Define line style, shading approach, color palette
 - Specify art medium: digital painting, watercolor, 3D render, etc.
 
-## Quality & Detail
-- Describe the desired quality through narrative context, not keyword lists.
-  e.g., "captured with a DSLR in sharp focus, every skin texture visible"
-  instead of listing "4K, HDR, high-quality."
-- Specify materials and textures concretely: "navy tweed jacket" not just "jacket."
-
-## Positive Framing
-- Describe what you WANT, not what to exclude.
-  e.g., "an empty, quiet street with no signs of traffic" instead of "no cars."
-
-## Action & Behavior
-- Describe what the subject is DOING in the scene.
-  e.g., "gently patting cream onto her cheek with fingertips"
-  instead of just describing a static pose.
+## Quality & Detail Modifiers
+- General: high-quality, beautiful, detailed, professional
+- Photography: 4K, HDR, studio lighting, DSLR quality
+- Artistic: by a professional artist, masterful composition
+- Texture: fine details, realistic textures, sharp focus
 
 ## Key Rules
 - Write NARRATIVE descriptions, not keyword lists

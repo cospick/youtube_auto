@@ -45,9 +45,9 @@ async function loadPreview() {
                     </div>
                     <div class="prompt-divider"><span>또는</span></div>
                     <div class="prompt-korean">
-                        <label class="prompt-label">한글로 새 요청</label>
+                        <label class="prompt-label">한글로 새 요청 <span class="help-tip" tabindex="0">&#63;<span class="help-tip-content">이미지 일관성을 위해 <b>한국 젊은 여성</b> 등 인물 묘사를 꼭 포함하세요.<br><br><b>예시:</b><br>• 한국 젊은 여성이 거울을 보며 볼의 붉은기를 걱정하는 모습<br>• 한국 젊은 여성이 화장대 앞에서 크림을 손등에 짜는 모습<br>• 건조하고 갈라진 얼굴 피부를 아주 가까이서 확대한 모습<br>• 세라마이드 성분이 담긴 화장품 병이 욕실 선반에 놓인 모습<br>• 한국 젊은 여성이 촉촉해진 피부를 만지며 만족스럽게 웃는 모습</span></span></label>
                         <input type="text" class="korean-request" id="korean-req-${i}"
-                               placeholder="예: 한국 여성이 거울 앞에서 화장하는 모습">
+                               placeholder="예: 한국 젊은 여성이 거울을 보며 볼의 붉은기를 걱정하는 모습">
                         <button class="btn-small btn-primary" onclick="regenerateWithRequest(${i})">한글 요청으로 재생성</button>
                     </div>
                 </div>
@@ -144,7 +144,12 @@ async function doRegenerate(index, koreanRequest, englishPrompt = null) {
                         clearInterval(interval);
                         overlay.style.display = 'none';
                         regenBtns.forEach(btn => btn.disabled = false);
-                        alert(job.error || '이미지 재생성 실패');
+                        const errMsg = job.error || '이미지 재생성 실패';
+                        const isServerBusy = errMsg.includes('503') || errMsg.includes('UNAVAILABLE') || errMsg.includes('429') || errMsg.includes('RESOURCE_EXHAUSTED');
+                        const userMsg = isServerBusy
+                            ? 'Google AI 서버가 일시적으로 과부하 상태입니다.\n잠시 후 다시 시도해주세요.\n\n[상세 정보]\n' + errMsg
+                            : '이미지 재생성에 실패했습니다.\n다시 시도해주세요.\n\n[상세 정보]\n' + errMsg;
+                        alert(userMsg);
                         loadPreview();
                         return;
                     }
@@ -167,7 +172,11 @@ async function doRegenerate(index, koreanRequest, englishPrompt = null) {
             }, 1000);
         }
     } catch (e) {
-        alert('재생성 실패: ' + e.message);
+        const errText = e.message || '';
+        const isBusy = errText.includes('503') || errText.includes('UNAVAILABLE') || errText.includes('429') || errText.includes('RESOURCE_EXHAUSTED');
+        alert(isBusy
+            ? 'Google AI 서버가 일시적으로 과부하 상태입니다.\n잠시 후 다시 시도해주세요.\n\n[상세 정보]\n' + errText
+            : '이미지 재생성에 실패했습니다.\n다시 시도해주세요.\n\n[상세 정보]\n' + errText);
         img.style.opacity = '1';
         overlay.style.display = 'none';
         regenBtns.forEach(btn => btn.disabled = false);

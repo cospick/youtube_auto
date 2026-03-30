@@ -26,7 +26,7 @@ async def get_preview(
     job = db.query(Job).filter(Job.id == job_id).first()
     if not job:
         raise HTTPException(status_code=404, detail="작업을 찾을 수 없습니다")
-    if job.status not in ("preview_ready", "awaiting_confirmation"):
+    if job.status not in ("preview_ready", "awaiting_confirmation", "regenerating_image"):
         raise HTTPException(status_code=400, detail=f"미리보기 불가 (상태: {job.status})")
 
     lines = [ScriptLine(**l) for l in json.loads(job.script_json)]
@@ -97,6 +97,9 @@ async def regenerate_image(
     lines = json.loads(job.script_json)
     if line_index < 0 or line_index >= len(lines):
         raise HTTPException(status_code=400, detail="잘못된 이미지 인덱스")
+
+    job.status = "regenerating_image"
+    db.commit()
 
     background_tasks.add_task(_regenerate_single_image, job_id, line_index, body.korean_request, body.english_prompt)
     return {"message": f"이미지 {line_index + 1} 재생성 시작"}

@@ -9,7 +9,6 @@ class StylePreset(str, Enum):
     REALISTIC = "realistic"
     ANIME = "anime"
     ILLUSTRATION = "illustration"
-    CINEMATIC = "cinematic"
 
 
 class TTSEngine(str, Enum):
@@ -94,7 +93,7 @@ class NarrationResponse(BaseModel):
 
 class ImagePromptRequest(BaseModel):
     narration_lines: list[str]
-    style: StylePreset = StylePreset.CINEMATIC
+    style: StylePreset = StylePreset.REALISTIC
 
 
 class ImagePromptResponse(BaseModel):
