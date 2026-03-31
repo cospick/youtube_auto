@@ -241,6 +241,15 @@ async def generate_image_prompts(
 
     lines_text = "\n".join([f"  Line {i+1}: \"{line}\"" for i, line in enumerate(narration_lines)])
 
+    cosmetics_guide = ""
+    if category == "cosmetics":
+        cosmetics_guide = """
+[COSMETICS SHOT TYPE GUIDE]
+- When narration describes skin problems, damage, texture, or barrier issues, actively use EXTREME CLOSE-UP or MACRO shots (show every pore, crack, flake, redness in microscopic detail).
+- When narration describes ingredients or scientific explanation, use MACRO shots of product texture, serum droplets, or skin surface absorbing the product.
+- Use photography terms like: 100mm macro lens, clinical lighting, visible micro-cracks, flaky texture, glistening, pearlescent glow, dermatological photography style.
+"""
+
     prompt = f"""You are a visual director for YouTube Shorts.
 For each narration line below, create an English image generation prompt and assign a camera motion type.
 
@@ -262,12 +271,7 @@ Image style: {style_desc}
 - Keep each prompt under 60 words.
 - Do NOT include any text, words, letters, or watermarks.
 - Each prompt must describe ONE clear scene.
-{f"""
-[COSMETICS SHOT TYPE GUIDE]
-- When narration describes skin problems, damage, texture, or barrier issues, actively use EXTREME CLOSE-UP or MACRO shots (show every pore, crack, flake, redness in microscopic detail).
-- When narration describes ingredients or scientific explanation, use MACRO shots of product texture, serum droplets, or skin surface absorbing the product.
-- Use photography terms like: 100mm macro lens, clinical lighting, visible micro-cracks, flaky texture, glistening, pearlescent glow, dermatological photography style.
-""" if category == "cosmetics" else ""}
+{cosmetics_guide}
 [MOTION RULES]
 - Assign a motion type from: {MOTION_TYPES}
 - Vary motions — do not repeat the same motion consecutively.
