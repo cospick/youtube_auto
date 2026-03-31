@@ -97,17 +97,14 @@ class ImagePromptRequest(BaseModel):
     category: str = "general"
 
 
-class ImagePromptResponse(BaseModel):
-    lines: list[ScriptLine]
-
-
-# ── 요청 (기존) ──
-
-
 class ScriptLine(BaseModel):
     text: str
     image_prompt: str
     motion: MotionType
+
+
+class ImagePromptResponse(BaseModel):
+    lines: list[ScriptLine]
 
 
 class JobCreateRequest(BaseModel):
