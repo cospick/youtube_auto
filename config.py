@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     FPS: int = 30
 
     # Gemini 모델
-    GEMINI_TEXT_MODEL: str = "gemini-2.5-flash"
+    GEMINI_TEXT_MODEL: str = "gemini-3-flash-preview"
     GEMINI_IMAGE_MODEL: str = "gemini-3.1-flash-image-preview"
 
     # JWT 인증
