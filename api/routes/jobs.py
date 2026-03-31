@@ -9,6 +9,7 @@ from db.database import get_db
 from db.models import Job, User
 from config import settings
 import asyncio
+import glob
 import json
 import os
 
@@ -207,6 +208,15 @@ async def retry_images(
 ):
     """실패한 이미지 생성 재시도"""
     job = get_user_job(db, job_id, _user)
+
+    # 이미 진행 중이면 거부
+    if job.status == "generating_images":
+        raise HTTPException(status_code=409, detail="이미지 생성이 이미 진행 중입니다")
+
+    # 기존 이미지 파일 삭제 (SSE가 파일 존재로 완료를 판단하므로)
+    images_dir = os.path.join(settings.STORAGE_DIR, job_id, "images")
+    for f in glob.glob(os.path.join(images_dir, "img_*.png")):
+        os.remove(f)
 
     job.status = "pending"
     job.error_message = None

@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     FPS: int = 30
 
     # Gemini 모델
-    GEMINI_TEXT_MODEL: str = "gemini-3-flash-preview"
+    GEMINI_TEXT_MODEL: str = "gemini-2.5-pro"
     GEMINI_IMAGE_MODEL: str = "gemini-3.1-flash-image-preview"
 
     # JWT 인증
@@ -110,12 +110,25 @@ def find_font(bold=True):
                 "/System/Library/Fonts/AppleSDGothicNeo.ttc",
             ]
     else:
-        # Linux (Docker) — glob으로 실제 설치된 Noto CJK 폰트 탐색
+        # Linux (Docker) — Pretendard 우선, Noto CJK 폴백
+        if bold:
+            candidates = [
+                "/usr/share/fonts/pretendard/Pretendard-ExtraBold.otf",
+                "/usr/share/fonts/pretendard/Pretendard-Bold.otf",
+            ]
+        else:
+            candidates = [
+                "/usr/share/fonts/pretendard/Pretendard-SemiBold.otf",
+                "/usr/share/fonts/pretendard/Pretendard-Regular.otf",
+            ]
+        for path in candidates:
+            if os.path.exists(path):
+                return path
+        # 폴백: Noto Sans CJK
         pattern = "**/NotoSansCJK*Bold*" if bold else "**/NotoSansCJK*Regular*"
         found = _glob.glob(f"/usr/share/fonts/{pattern}", recursive=True)
         if found:
             return found[0]
-        # 폴백 후보
         fallback = "NotoSansCJK-Bold.ttc" if bold else "NotoSansCJK-Regular.ttc"
         candidates = [
             f"/usr/share/fonts/opentype/noto/{fallback}",

@@ -10,6 +10,7 @@ const phase = params.get('phase') || 'render';
 
 let cardsBuilt = false;
 let revealedImages = new Set();
+let currentSource = null;
 
 /* ── 초기 UI ── */
 
@@ -30,13 +31,20 @@ function initUI() {
 function connectSSE() {
     if (!jobId) return;
 
-    const source = new EventSource(`/api/jobs/${jobId}/stream`);
+    // 기존 연결 정리 (재시도 시 안전한 재진입)
+    if (currentSource) {
+        currentSource.close();
+        currentSource = null;
+    }
 
-    source.onmessage = function(event) {
+    currentSource = new EventSource(`/api/jobs/${jobId}/stream`);
+
+    currentSource.onmessage = function(event) {
         const data = JSON.parse(event.data);
 
         if (data.error && !data.status) {
-            source.close();
+            currentSource.close();
+            currentSource = null;
             return;
         }
 
@@ -50,7 +58,8 @@ function connectSSE() {
 
         // 이미지 생성 완료 → 미리보기 페이지로
         if (data.status === 'preview_ready' && phase === 'images') {
-            source.close();
+            currentSource.close();
+            currentSource = null;
             setTimeout(() => {
                 window.location.href = `/static/preview.html?job=${jobId}`;
             }, 1500);
@@ -59,7 +68,8 @@ function connectSSE() {
 
         // AI 클립 생성 완료 → 클립 미리보기 페이지로
         if (data.status === 'clips_ready' && phase === 'clips') {
-            source.close();
+            currentSource.close();
+            currentSource = null;
             setTimeout(() => {
                 window.location.href = `/static/clip_preview.html?job=${jobId}`;
             }, 1500);
@@ -68,21 +78,24 @@ function connectSSE() {
 
         // 영상 완성
         if (data.status === 'completed') {
-            source.close();
+            currentSource.close();
+            currentSource = null;
             showCompleted(data.video_url);
             return;
         }
 
         // 실패
         if (data.status === 'failed') {
-            source.close();
+            currentSource.close();
+            currentSource = null;
             showError(data.error || '알 수 없는 에러');
             return;
         }
     };
 
-    source.onerror = function() {
-        source.close();
+    currentSource.onerror = function() {
+        currentSource.close();
+        currentSource = null;
         startPolling();
     };
 }
@@ -270,14 +283,18 @@ async function retryImages() {
     var jobId = new URLSearchParams(window.location.search).get('job');
     if (!jobId) return;
 
+    var btn = document.getElementById('retry-images-btn');
+    if (btn) { btn.disabled = true; btn.textContent = '재시도 중...'; }
+
     try {
         var resp = await authFetch('/api/jobs/' + jobId + '/retry-images', { method: 'POST' });
         if (!resp.ok) {
             var err = await resp.json();
             alert(err.detail || '재시도 실패');
+            if (btn) { btn.disabled = false; btn.textContent = '이미지 생성 재시도'; }
             return;
         }
-        // 상태 초기화 후 다시 폴링 시작
+        // 상태 초기화 후 SSE 재연결
         cardsBuilt = false;
         revealedImages = new Set();
         document.getElementById('error-section').classList.add('hidden');
@@ -287,9 +304,10 @@ async function retryImages() {
         document.getElementById('progress-step').textContent = '이미지 생성 재시도 중...';
         document.getElementById('progress-percent').textContent = '0%';
         document.getElementById('progress-fill').style.width = '0%';
-        startPolling();
+        connectSSE();
     } catch (e) {
         alert('재시도 요청 실패: ' + e.message);
+        if (btn) { btn.disabled = false; btn.textContent = '이미지 생성 재시도'; }
     }
 }
 
