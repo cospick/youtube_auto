@@ -16,9 +16,9 @@
         <div id="navbar-right" class="navbar-right"></div>
     </nav>
 
-    <div class="container" style="padding-top: 20px; max-width: 520px;">
+    <div class="container" style="padding-top: 20px; max-width: 640px;">
         <h2 class="page-title">API 키 설정</h2>
-        <p style="color: var(--text-dim); font-size: 14px; margin-bottom: 20px;">각 서비스에서 발급받은 API 키를 입력하세요</p>
+        <p style="color: var(--text-dim); font-size: 15px; margin-bottom: 20px;">각 서비스에서 발급받은 API 키를 입력하세요</p>
 
         <div id="auth-error" class="auth-error hidden"></div>
         <div id="auth-success" class="auth-success hidden"></div>
@@ -58,14 +58,14 @@
                     <div class="form-group">
                         <label for="typecast-key">
                             Typecast API 키
-                            <span class="key-badge optional">선택</span>
+                            <span class="key-badge required">필수</span>
                             <span class="key-status" id="typecast-status"></span>
                         </label>
                         <div class="key-input-row">
                             <input type="password" id="typecast-key" placeholder="Typecast API 키">
                             <button type="button" class="btn-toggle-eye" onclick="toggleKeyVisibility('typecast-key')">보기</button>
                         </div>
-                        <p class="key-desc">Typecast 음성을 사용할 때만 필요 (Edge-TTS는 키 불필요)</p>
+                        <p class="key-desc">Typecast 고품질 음성 생성에 사용됩니다</p>
                         <div class="key-links-row">
                             <a href="https://typecast.ai/developers/api" target="_blank" class="key-link">Typecast에서 발급</a>
                             <span class="key-link-divider">|</span>
@@ -86,14 +86,14 @@
                     <div class="form-group">
                         <label for="fal-key">
                             FAL API 키
-                            <span class="key-badge optional">선택</span>
+                            <span class="key-badge required">필수</span>
                             <span class="key-status" id="fal-status"></span>
                         </label>
                         <div class="key-input-row">
                             <input type="password" id="fal-key" placeholder="FAL API 키">
                             <button type="button" class="btn-toggle-eye" onclick="toggleKeyVisibility('fal-key')">보기</button>
                         </div>
-                        <p class="key-desc">AI 영상 모드(Hailuo, Wan 등)를 사용할 때만 필요 (Ken Burns는 키 불필요)</p>
+                        <p class="key-desc">AI 영상 클립 생성에 사용됩니다 (Hailuo, Kling, Veo 등)</p>
                         <div class="key-links-row">
                             <a href="https://fal.ai/dashboard/keys" target="_blank" class="key-link">FAL에서 발급</a>
                             <span class="key-link-divider">|</span>
@@ -119,39 +119,50 @@
     </div>
 
     <style>
+        #api-keys-form label { font-size: 15px; margin-bottom: 8px; }
+        #api-keys-form input { font-size: 16px; }
+        #api-keys-form .form-group {
+            margin-bottom: 28px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border);
+        }
+        #api-keys-form .form-group:last-of-type {
+            border-bottom: none;
+            margin-bottom: 16px;
+        }
         .key-input-row { display: flex; gap: 8px; }
         .key-input-row input { flex: 1; }
         .btn-toggle-eye {
             background: var(--surface); border: 1px solid var(--border); color: var(--text-dim);
-            border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 13px; white-space: nowrap;
+            border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 14px; white-space: nowrap;
         }
         .btn-toggle-eye:hover { border-color: var(--primary); color: var(--text); }
         .key-badge {
-            font-size: 11px; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-weight: normal;
+            font-size: 12px; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-weight: normal;
         }
         .key-badge.required { background: rgba(255,71,87,0.15); color: var(--error); }
         .key-badge.optional { background: rgba(136,136,136,0.15); color: var(--text-dim); }
-        .key-status { font-size: 12px; margin-left: 8px; }
+        .key-status { font-size: 14px; margin-left: 8px; }
         .key-status.set { color: var(--success); }
         .key-status.unset { color: var(--text-dim); }
-        .key-desc { color: var(--text-dim); font-size: 12px; margin-top: 4px; }
-        .key-link { color: var(--primary); font-size: 12px; text-decoration: none; }
+        .key-desc { color: var(--text-dim); font-size: 15px; margin-top: 8px; }
+        .key-link { color: var(--primary); font-size: 14px; text-decoration: none; }
         .key-link:hover { text-decoration: underline; }
-        .key-links-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-        .key-link-divider { color: var(--border); font-size: 12px; }
+        .key-links-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+        .key-link-divider { color: var(--border); font-size: 14px; }
         .key-guide-toggle {
             background: none; border: none; color: var(--primary);
-            font-size: 12px; cursor: pointer; padding: 0;
+            font-size: 14px; cursor: pointer; padding: 0;
         }
         .key-guide-toggle:hover { text-decoration: underline; }
         .key-guide {
             background: var(--bg); border: 1px solid var(--border);
             border-radius: 8px; padding: 12px 16px; margin-top: 8px;
-            font-size: 13px; color: var(--text-dim); line-height: 1.8;
+            font-size: 15px; color: var(--text-dim); line-height: 1.8;
         }
         .key-guide ol { padding-left: 18px; margin: 0; }
-        .key-guide-tip { font-size: 12px; margin-top: 8px; }
-        .key-note { text-align: center; color: var(--text-dim); font-size: 12px; margin-top: 12px; }
+        .key-guide-tip { font-size: 14px; margin-top: 8px; }
+        .key-note { text-align: center; color: var(--text-dim); font-size: 14px; margin-top: 12px; }
     </style>
 
     <script src="/static/js/auth.js"></script>

@@ -67,6 +67,21 @@ async def reject_user(user_id: str, db: Session = Depends(get_db), _admin: User 
     return {"message": f"{user.email} 거절(삭제) 완료"}
 
 
+@router.post("/users/{user_id}/role")
+async def toggle_user_role(user_id: str, db: Session = Depends(get_db), _admin: User = Depends(get_current_admin)):
+    """사용자 역할 변경 (user ↔ admin)"""
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="사용자를 찾을 수 없습니다")
+    if user.id == _admin.id and user.role == "admin":
+        admin_count = db.query(User).filter(User.role == "admin").count()
+        if admin_count <= 1:
+            raise HTTPException(status_code=400, detail="관리자가 1명일 때는 자신의 역할을 변경할 수 없습니다")
+    user.role = "admin" if user.role == "user" else "user"
+    db.commit()
+    return {"message": f"{user.email} → {user.role}로 변경 완료"}
+
+
 @router.get("/jobs")
 async def list_all_jobs(limit: int = 50, db: Session = Depends(get_db), _admin: User = Depends(get_current_admin)):
     """전체 작업 이력 (관리자용, 작성자 정보 포함)"""

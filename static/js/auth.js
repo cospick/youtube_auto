@@ -130,13 +130,11 @@ function updateUserUI(user) {
     nav.appendChild(historyLink);
 
     // API 키 입력 (미설정 시)
-    if (!user.has_gemini_key) {
-        const ctaBtn = document.createElement('a');
-        ctaBtn.href = '/static/settings.html';
-        ctaBtn.className = 'navbar-cta';
-        ctaBtn.textContent = 'API 키를 입력해주세요';
-        nav.appendChild(ctaBtn);
-    }
+    const ctaBtn = document.createElement('a');
+    ctaBtn.href = '/static/settings.html';
+    ctaBtn.className = 'navbar-cta';
+    ctaBtn.textContent = 'API 키를 입력해주세요';
+    nav.appendChild(ctaBtn);
 
     // 다크/라이트 모드 전환
     const themeBtn = document.createElement('button');
@@ -183,7 +181,7 @@ async function logout() {
 // 로그인/리셋/승인대기 페이지가 아니면 인증 확인
 document.addEventListener('DOMContentLoaded', () => {
     const path = window.location.pathname;
-    if (!path.includes('login') && !path.includes('reset-password') && !path.includes('pending')) {
+    if (!path.includes('login') && !path.includes('reset-password') && !path.includes('pending') && !path.includes('terms') && !path.includes('privacy')) {
         checkAuth();
     }
 });
