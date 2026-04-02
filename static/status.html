@@ -3,14 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>진행 상태 - AI 쇼츠</title>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <title>진행 상태 - Shorts Pick</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=5">
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1 id="page-title">준비 중...</h1>
-        </header>
+<body class="has-navbar">
+    <script>if(localStorage.getItem('theme')==='dark'||!localStorage.getItem('theme'))document.body.classList.add('dark');</script>
+    <nav class="navbar">
+        <a href="/" class="navbar-logo">
+            <span class="navbar-logo-emoji">🎬</span>
+            <span class="navbar-logo-text">Shorts Pick</span>
+        </a>
+        <div id="navbar-right" class="navbar-right"></div>
+    </nav>
+
+    <div class="container" style="padding-top: 20px;">
+        <h2 class="page-title" id="page-title">준비 중...</h2>
 
         <section class="card">
             <!-- 이미지 생성 단계: 카드 그리드 (JS에서 skeleton 카드 삽입) -->
