@@ -3,22 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>미리보기 - Shorts Pick</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=5">
+    <title>미리보기 - AI 쇼츠</title>
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
-<body class="has-navbar">
-    <script>if(localStorage.getItem('theme')==='dark'||!localStorage.getItem('theme'))document.body.classList.add('dark');</script>
-    <nav class="navbar">
-        <a href="/" class="navbar-logo">
-            <span class="navbar-logo-emoji">🎬</span>
-            <span class="navbar-logo-text">Shorts Pick</span>
-        </a>
-        <div id="navbar-right" class="navbar-right"></div>
-    </nav>
-
-    <div class="container" style="padding-top: 20px;">
-        <h2 class="page-title">이미지 미리보기</h2>
-        <p class="subtitle" id="preview-title" style="text-align:center; margin-bottom:16px;"></p>
+<body>
+    <div class="container">
+        <header>
+            <h1>이미지 미리보기</h1>
+            <p class="subtitle" id="preview-title"></p>
+        </header>
 
         <div id="preview-grid" class="preview-grid"></div>
 
