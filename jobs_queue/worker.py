@@ -66,7 +66,9 @@ async def generate_images_for_job(job_id: str):
 
 
 async def generate_clips_for_job(job_id: str):
-    """AI 영상 클립 생성 백그라운드 태스크"""
+    """AI 영상 클립 생성 백그라운드 태스크 (fal.ai)"""
+    from core.fal_video import generate_clips_batch
+
     db = SessionLocal()
     try:
         job = db.query(Job).filter(Job.id == job_id).first()
@@ -81,29 +83,19 @@ async def generate_clips_for_job(job_id: str):
 
         images = sorted(glob.glob(os.path.join(job_dir, "images", "img_*.png")))
 
+        # video_mode에서 모델 키 결정 (hailuo / wan)
         model_key = getattr(job, "video_mode", "hailuo") or "hailuo"
         keys = resolve_user_api_keys(db, job.user_id)
 
         try:
-            if model_key == "veo_lite":
-                from core.google_video import generate_clips_batch as google_generate_clips_batch
-                await google_generate_clips_batch(
-                    images=images,
-                    output_dir=clips_dir,
-                    progress_callback=update_job_progress,
-                    job_id=job_id,
-                    api_key=keys["gemini"],
-                )
-            else:
-                from core.fal_video import generate_clips_batch
-                await generate_clips_batch(
-                    images=images,
-                    output_dir=clips_dir,
-                    model_key=model_key,
-                    progress_callback=update_job_progress,
-                    job_id=job_id,
-                    api_key=keys["fal"],
-                )
+            await generate_clips_batch(
+                images=images,
+                output_dir=clips_dir,
+                model_key=model_key,
+                progress_callback=update_job_progress,
+                job_id=job_id,
+                api_key=keys["fal"],
+            )
 
             update_job_progress(job_id, "clips_ready", 0.50, "AI 영상 클립 생성 완료 - 미리보기 확인")
 
@@ -119,6 +111,8 @@ async def generate_clips_for_job(job_id: str):
 
 async def regenerate_clip_for_job(job_id: str, line_index: int):
     """단일 AI 영상 클립 재생성"""
+    from core.fal_video import generate_video_clip
+
     db = SessionLocal()
     try:
         job = db.query(Job).filter(Job.id == job_id).first()
@@ -135,21 +129,12 @@ async def regenerate_clip_for_job(job_id: str, line_index: int):
         keys = resolve_user_api_keys(db, job.user_id)
 
         try:
-            if model_key == "veo_lite":
-                from core.google_video import generate_video_clip as google_generate_video_clip
-                await google_generate_video_clip(
-                    image_path=image_path,
-                    output_path=output_path,
-                    api_key=keys["gemini"],
-                )
-            else:
-                from core.fal_video import generate_video_clip
-                await generate_video_clip(
-                    image_path=image_path,
-                    output_path=output_path,
-                    model_key=model_key,
-                    api_key=keys["fal"],
-                )
+            await generate_video_clip(
+                image_path=image_path,
+                output_path=output_path,
+                model_key=model_key,
+                api_key=keys["fal"],
+            )
 
             from core.r2_storage import upload_file as r2_upload, is_r2_enabled
             if is_r2_enabled():

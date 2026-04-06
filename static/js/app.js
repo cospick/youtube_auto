@@ -3,11 +3,21 @@
  * Step 1: 주제 설정 → Step 2: 제목 선택 → Step 3: 나레이션 확인
  * → Step 4: 이미지 스타일 → Step 5: 음성 설정 → Step 6: BGM 설정
  * → Step 7: 최종 확인 → Job 생성
- */
 
 function showFriendlyError(msg) {
-    alert(msg);
+    const is503 = msg.includes('503') || msg.includes('UNAVAILABLE');
+    const is429 = msg.includes('429') || msg.includes('RESOURCE_EXHAUSTED');
+    let userMsg;
+    if (is503) {
+        userMsg = 'Google AI 서버가 현재 많이 바쁜 상태입니다.\n자동으로 3회 재시도했지만 실패했습니다.\n\n1~2분 후에 다시 시도해주세요.';
+    } else if (is429) {
+        userMsg = 'API 요청 횟수 제한에 도달했습니다.\n1분 후에 다시 시도해주세요.';
+    } else {
+        userMsg = '요청 처리에 실패했습니다.\n다시 시도해주세요.\n\n[상세 정보]\n' + msg;
+    }
+    alert(userMsg);
 }
+ */
 
 // ── TTS 음성 옵션 (엔진별) ──
 const VOICE_OPTIONS = {
@@ -165,15 +175,14 @@ async function generateTitles() {
         titleOptions = await resp.json();
         displayTitles(titleOptions);
     } catch (e) {
-        hideLoading();
         showFriendlyError(e.message);
+        hideLoading();
         goToStep(0);
     }
 }
 
 function displayTitles(data) {
     hideLoading();
-    hideStepGuide('step-titles');
     document.getElementById('btn-next-title').disabled = true;
     document.getElementById('title-split-editor').classList.add('hidden');
 
@@ -239,15 +248,13 @@ async function generateNarration() {
         narrationData = await resp.json();
         displayNarration(narrationData);
     } catch (e) {
-        hideLoading();
         showFriendlyError(e.message);
-        goToStep(1);
+        hideLoading();
     }
 }
 
 function displayNarration(data) {
     hideLoading();
-    hideStepGuide('step-narration');
 
     document.getElementById('selected-title-display').textContent = selectedTitle;
 
@@ -537,8 +544,8 @@ async function createJob() {
         const job = await resp.json();
         window.location.href = `/static/status.html?job=${job.job_id}&phase=images`;
     } catch (e) {
-        hideLoading();
         showFriendlyError(e.message);
+        hideLoading();
     }
 }
 

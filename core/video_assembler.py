@@ -13,7 +13,6 @@ from core.audio_utils import (
 from core.subtitle_utils import split_subtitle_natural, split_title
 from core.tts_engines import generate_tts_edge, generate_tts_typecast
 from core.image_pipeline import apply_ken_burns, process_ai_clip
-from api.models import AI_VIDEO_MODES
 from config import settings
 
 
@@ -106,7 +105,7 @@ async def assemble_shorts(job_id: str, config: dict, progress_callback=None):
 
     clip_files = []
 
-    if video_mode in AI_VIDEO_MODES and ai_clips and len(ai_clips) == len(images):
+    if video_mode in ("hailuo", "hailuo23", "wan", "kling", "veo") and ai_clips and len(ai_clips) == len(images):
         # AI 영상 모드: AI 클립에 trim + 서서히 줌인 적용
         _update(
             progress_callback, job_id, "assembling_video", 0.55, "AI 클립 trim + 줌인 적용 중..."
