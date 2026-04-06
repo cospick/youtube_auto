@@ -38,20 +38,7 @@
                             <button type="button" class="btn-toggle-eye" onclick="toggleKeyVisibility('gemini-key')">보기</button>
                         </div>
                         <p class="key-desc">제목, 나레이션, 이미지 생성에 사용됩니다</p>
-                        <div class="key-links-row">
-                            <a href="https://aistudio.google.com/apikey" target="_blank" class="key-link">Google AI Studio에서 발급</a>
-                            <span class="key-link-divider">|</span>
-                            <button type="button" class="key-guide-toggle" onclick="document.getElementById('gemini-guide').classList.toggle('hidden')">📖 발급 방법</button>
-                        </div>
-                        <div id="gemini-guide" class="key-guide hidden">
-                            <ol>
-                                <li>Google 계정으로 로그인</li>
-                                <li>위 "Google AI Studio에서 발급" 링크 클릭</li>
-                                <li>"API 키 만들기" 버튼 클릭</li>
-                                <li>생성된 키를 복사하여 위 입력란에 붙여넣기</li>
-                            </ol>
-                            <p class="key-guide-tip">💡 무료로 사용 가능합니다 (일일 사용량 제한 있음)</p>
-                        </div>
+                        <a href="https://aistudio.google.com/apikey" target="_blank" class="key-link">Google AI Studio에서 발급</a>
                     </div>
 
                     <!-- Typecast -->
@@ -66,20 +53,7 @@
                             <button type="button" class="btn-toggle-eye" onclick="toggleKeyVisibility('typecast-key')">보기</button>
                         </div>
                         <p class="key-desc">Typecast 음성을 사용할 때만 필요 (Edge-TTS는 키 불필요)</p>
-                        <div class="key-links-row">
-                            <a href="https://typecast.ai/developers/api" target="_blank" class="key-link">Typecast에서 발급</a>
-                            <span class="key-link-divider">|</span>
-                            <button type="button" class="key-guide-toggle" onclick="document.getElementById('typecast-guide').classList.toggle('hidden')">📖 발급 방법</button>
-                        </div>
-                        <div id="typecast-guide" class="key-guide hidden">
-                            <ol>
-                                <li>typecast.ai 접속 후 회원가입</li>
-                                <li>로그인 → 위 "Typecast에서 발급" 링크 클릭</li>
-                                <li>개발자 대시보드에서 API Key 생성</li>
-                                <li>생성된 키를 복사하여 위 입력란에 붙여넣기</li>
-                            </ol>
-                            <p class="key-guide-tip">💡 무료 플랜: 월 5분 음성 생성 가능</p>
-                        </div>
+                        <a href="https://typecast.ai/developers/api" target="_blank" class="key-link">Typecast에서 발급</a>
                     </div>
 
                     <!-- FAL -->
@@ -94,20 +68,7 @@
                             <button type="button" class="btn-toggle-eye" onclick="toggleKeyVisibility('fal-key')">보기</button>
                         </div>
                         <p class="key-desc">AI 영상 모드(Hailuo, Wan 등)를 사용할 때만 필요 (Ken Burns는 키 불필요)</p>
-                        <div class="key-links-row">
-                            <a href="https://fal.ai/dashboard/keys" target="_blank" class="key-link">FAL에서 발급</a>
-                            <span class="key-link-divider">|</span>
-                            <button type="button" class="key-guide-toggle" onclick="document.getElementById('fal-guide').classList.toggle('hidden')">📖 발급 방법</button>
-                        </div>
-                        <div id="fal-guide" class="key-guide hidden">
-                            <ol>
-                                <li>fal.ai 접속 후 Google 또는 GitHub으로 회원가입</li>
-                                <li>위 "FAL에서 발급" 링크 클릭</li>
-                                <li>Keys 페이지에서 API Key 생성</li>
-                                <li>생성된 키를 복사하여 위 입력란에 붙여넣기</li>
-                            </ol>
-                            <p class="key-guide-tip">💡 신규 가입 시 무료 크레딧 제공 (이후 종량제)</p>
-                        </div>
+                        <a href="https://fal.ai/dashboard/keys" target="_blank" class="key-link">FAL에서 발급</a>
                     </div>
 
                     <button type="submit" class="btn-primary btn-full" id="btn-save">저장</button>
@@ -137,20 +98,6 @@
         .key-desc { color: var(--text-dim); font-size: 12px; margin-top: 4px; }
         .key-link { color: var(--primary); font-size: 12px; text-decoration: none; }
         .key-link:hover { text-decoration: underline; }
-        .key-links-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-        .key-link-divider { color: var(--border); font-size: 12px; }
-        .key-guide-toggle {
-            background: none; border: none; color: var(--primary);
-            font-size: 12px; cursor: pointer; padding: 0;
-        }
-        .key-guide-toggle:hover { text-decoration: underline; }
-        .key-guide {
-            background: var(--bg); border: 1px solid var(--border);
-            border-radius: 8px; padding: 12px 16px; margin-top: 8px;
-            font-size: 13px; color: var(--text-dim); line-height: 1.8;
-        }
-        .key-guide ol { padding-left: 18px; margin: 0; }
-        .key-guide-tip { font-size: 12px; margin-top: 8px; }
         .key-note { text-align: center; color: var(--text-dim); font-size: 12px; margin-top: 12px; }
     </style>
 
