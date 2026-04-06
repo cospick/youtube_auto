@@ -32,6 +32,11 @@ class VideoMode(str, Enum):
     WAN = "wan"
     KLING = "kling"
     VEO = "veo"
+    VEO_LITE = "veo_lite"
+
+
+# AI 영상 모드 (Ken Burns가 아닌 모든 모드)
+AI_VIDEO_MODES = frozenset({"hailuo", "hailuo23", "wan", "kling", "kling26", "veo", "veo_lite"})
 
 
 class JobStatus(str, Enum):

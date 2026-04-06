@@ -15,6 +15,20 @@ import traceback
 router = APIRouter(prefix="/api/generate", tags=["generate"])
 
 
+def _friendly_error(prefix: str, e: Exception) -> str:
+    """Gemini 에러를 사용자 친화적 메시지로 변환"""
+    err = str(e)
+    if "PERMISSION_DENIED" in err or "API key" in err:
+        return f"{prefix}: API 키를 확인해주세요"
+    if "RESOURCE_EXHAUSTED" in err or "429" in err:
+        return f"{prefix}: 요청 한도 초과, 잠시 후 다시 시도해주세요"
+    if "503" in err or "UNAVAILABLE" in err:
+        return f"{prefix}: AI 서버가 일시적으로 바쁩니다, 잠시 후 다시 시도해주세요"
+    if "timed out" in err.lower() or "timeout" in err.lower():
+        return f"{prefix}: 응답 시간 초과, 다시 시도해주세요"
+    return f"{prefix}: 일시적 오류, 다시 시도해주세요"
+
+
 @router.post("/titles", response_model=TitleResponse)
 async def generate_titles_endpoint(request: TitleRequest, db: Session = Depends(get_db), _user: User = Depends(get_approved_user)):
     """Step 2: 제목 3~4개 생성"""
@@ -35,7 +49,7 @@ async def generate_titles_endpoint(request: TitleRequest, db: Session = Depends(
     except Exception as e:
         tb = traceback.format_exc()
         print(f"[ERROR] 제목 생성 실패:\n{tb}")
-        raise HTTPException(status_code=500, detail=f"제목 생성 실패: {repr(e)}")
+        raise HTTPException(status_code=500, detail=_friendly_error("제목 생성 실패", e))
 
 
 @router.post("/narration", response_model=NarrationResponse)
@@ -62,7 +76,7 @@ async def generate_narration_endpoint(request: NarrationRequest, db: Session = D
     except Exception as e:
         tb = traceback.format_exc()
         print(f"[ERROR] 나레이션 생성 실패:\n{tb}")
-        raise HTTPException(status_code=500, detail=f"나레이션 생성 실패: {repr(e)}")
+        raise HTTPException(status_code=500, detail=_friendly_error("나레이션 생성 실패", e))
 
 
 @router.post("/image-prompts", response_model=ImagePromptResponse)
@@ -82,4 +96,4 @@ async def generate_image_prompts_endpoint(request: ImagePromptRequest, db: Sessi
     except Exception as e:
         tb = traceback.format_exc()
         print(f"[ERROR] 이미지 프롬프트 생성 실패:\n{tb}")
-        raise HTTPException(status_code=500, detail=f"이미지 프롬프트 생성 실패: {repr(e)}")
+        raise HTTPException(status_code=500, detail=_friendly_error("이미지 프롬프트 생성 실패", e))

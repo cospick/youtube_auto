@@ -36,7 +36,10 @@ def get_client(api_key: str = None) -> genai.Client:
     key = api_key or settings.GEMINI_API_KEY
     if not key:
         raise RuntimeError("Gemini API 키가 설정되지 않았습니다. 환경변수 또는 api_key 파라미터를 확인해주세요.")
-    return genai.Client(api_key=key)
+    return genai.Client(
+        api_key=key,
+        http_options={"timeout": 120_000},
+    )
 
 
 def _build_category_context(
@@ -122,7 +125,7 @@ Output ONLY valid JSON:
     ]
 }}"""
 
-    response = client.models.generate_content(
+    response = await client.aio.models.generate_content(
         model=settings.GEMINI_TEXT_MODEL,
         contents=prompt,
         config=genai.types.GenerateContentConfig(temperature=0.9),
@@ -209,7 +212,7 @@ Output ONLY valid JSON:
     ]
 }}"""
 
-    response = client.models.generate_content(
+    response = await client.aio.models.generate_content(
         model=settings.GEMINI_TEXT_MODEL,
         contents=prompt,
         config=genai.types.GenerateContentConfig(temperature=0.8),
@@ -288,7 +291,7 @@ Output ONLY valid JSON:
     ]
 }}"""
 
-    response = client.models.generate_content(
+    response = await client.aio.models.generate_content(
         model=settings.GEMINI_TEXT_MODEL,
         contents=prompt,
         config=genai.types.GenerateContentConfig(temperature=0.7),
@@ -333,7 +336,7 @@ async def korean_to_nb2_prompt(korean_request: str, narration_text: str, api_key
 
 영어 프롬프트만 출력하세요. 다른 설명 없이."""
 
-    response = client.models.generate_content(
+    response = await client.aio.models.generate_content(
         model=settings.GEMINI_TEXT_MODEL,
         contents=prompt,
         config=genai.types.GenerateContentConfig(temperature=0.7),
