@@ -84,12 +84,6 @@
             padding: 4px 12px; font-size: 12px; cursor: pointer; font-weight: 600;
         }
         .btn-approve:hover, .btn-reject:hover { opacity: 0.85; }
-        .btn-role {
-            background: none; border: 1px solid var(--border); color: var(--text-dim);
-            border-radius: 6px; padding: 4px 10px; font-size: 11px;
-            cursor: pointer; white-space: nowrap;
-        }
-        .btn-role:hover { border-color: var(--primary); color: var(--primary); }
 
         .empty-notice { color: var(--text-dim); text-align: center; padding: 20px; font-size: 14px; }
 
@@ -164,17 +158,8 @@
                 <span class="role-badge ${u.role}">${u.role}</span>
                 <span class="approved-badge ${u.approved ? 'yes' : 'no'}">${u.approved ? '승인' : '미승인'}</span>
                 <span class="date">${u.created_at ? new Date(u.created_at).toLocaleDateString('ko-KR') : ''}</span>
-                <button class="btn-role" onclick="toggleRole('${escapeHtml(u.id)}', '${u.role}')">${u.role === 'admin' ? 'user로 변경' : 'admin으로 변경'}</button>
             </div>
         `).join('');
-    }
-
-    async function toggleRole(userId, currentRole) {
-        const newRole = currentRole === 'admin' ? 'user' : 'admin';
-        if (!confirm(`이 사용자를 ${newRole}(으)로 변경하시겠습니까?`)) return;
-        const resp = await authFetch(`/api/admin/users/${userId}/role`, { method: 'POST' });
-        if (resp.ok) { loadAllUsers(); }
-        else { const err = await resp.json(); alert(err.detail || '역할 변경 실패'); }
     }
 
     async function approveUser(userId) {

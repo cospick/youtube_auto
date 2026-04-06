@@ -19,7 +19,7 @@
     border: none;
     border-radius: 20px;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12), 0 1px 4px rgba(0, 0, 0, 0.08);
-    padding: 64px 52px;
+    padding: 60px 48px;
     text-align: center;
 }
 body.dark .auth-panel.login-card {
@@ -40,18 +40,18 @@ body.dark .approval-notice { color: #888; }
     margin-bottom: 28px;
 }
 .login-logo-emoji {
-    font-size: 52px;
+    font-size: 44px;
     line-height: 1;
 }
 .login-logo-text {
-    font-size: 34px;
+    font-size: 30px;
     font-weight: 800;
     color: #1a1a1a;
     letter-spacing: -0.5px;
 }
 .login-subtitle {
     color: #888;
-    font-size: 17px;
+    font-size: 15px;
     margin-bottom: 36px;
 }
 
@@ -131,10 +131,10 @@ body.dark .approval-notice { color: #888; }
     align-items: center;
     justify-content: center;
     gap: 10px;
-    padding: 14px 44px;
+    padding: 13px 40px;
     border: none;
     border-radius: 12px;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
     cursor: pointer;
     transition: background 0.2s;
@@ -209,7 +209,7 @@ body.dark .approval-notice { color: #888; }
 /* 링크 */
 .auth-links {
     text-align: center;
-    font-size: 14px;
+    font-size: 13px;
     color: var(--text-dim);
 }
 .auth-links a {
@@ -284,23 +284,10 @@ body.dark .approval-notice { color: #888; }
     color: var(--text);
 }
 
-.consent-notice {
-    text-align: center;
-    color: #999;
-    font-size: 14px;
-    margin-top: 12px;
-}
-.consent-notice a {
-    color: #999;
-    text-decoration: underline;
-}
-.consent-notice a:hover { color: var(--primary); }
-body.dark .consent-notice, body.dark .consent-notice a { color: #888; }
-
 .approval-notice {
     text-align: center;
     color: #aaa;
-    font-size: 14px;
+    font-size: 13px;
     margin-top: 20px;
 }
 
