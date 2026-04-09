@@ -7,6 +7,7 @@ const jobId = params.get('job');
 let previewData = null;
 
 async function loadPreview() {
+    closeHelpTip();
     if (!jobId) {
         alert('작업 ID가 없습니다');
         return;
@@ -31,7 +32,6 @@ async function loadPreview() {
                 <div class="preview-info">
                     <span class="line-num">${i + 1}</span>
                     <p class="preview-text">${escapeHtml(line.text)}</p>
-                    <span class="line-motion">${line.motion}</span>
                     <button class="btn-small btn-secondary" onclick="toggleRequestInput(${i})">재생성</button>
                     <button class="btn-small btn-upload" onclick="triggerUpload(${i})">이미지 업로드</button>
                     <input type="file" id="upload-input-${i}" accept="image/png,image/jpeg,image/webp"
@@ -45,9 +45,9 @@ async function loadPreview() {
                     </div>
                     <div class="prompt-divider"><span>또는</span></div>
                     <div class="prompt-korean">
-                        <label class="prompt-label">한글로 새 요청 <span class="help-tip" tabindex="0">&#63;<span class="help-tip-content">이미지 일관성을 위해 <b>한국 젊은 여성</b> 등 인물 묘사를 꼭 포함하세요.<br><br><b>예시:</b><br>• 한국 젊은 여성이 거울을 보며 볼의 붉은기를 걱정하는 모습<br>• 한국 젊은 여성이 화장대 앞에서 크림을 손등에 짜는 모습<br>• 건조하고 갈라진 얼굴 피부를 아주 가까이서 확대한 모습<br>• 세라마이드 성분이 담긴 화장품 병이 욕실 선반에 놓인 모습<br>• 한국 젊은 여성이 촉촉해진 피부를 만지며 만족스럽게 웃는 모습</span></span></label>
+                        <label class="prompt-label">한글로 새 요청 <span class="help-tip" tabindex="0">&#63;<span class="help-tip-content"><b>작성 팁</b> (나노바나나 2 가이드)<br><br>키워드 나열보다 <b>문장으로 묘사</b>하면 훨씬 정확합니다.<br><br><b>포함하면 좋은 것:</b><br>• <b>인물</b> — 인종·나이·성별 (예: 한국 20대 여성)<br>• <b>행동</b> — 무엇을 하는지 (예: 거울을 보며 웃는)<br>• <b>장소</b> — 어디에서 (예: 밝은 카페에서)<br><br><b>예시:</b><br>• 한국 20대 여성이 카페에서 노트북을 보며 미소 짓는 모습<br>• 깔끔한 책상 위에 놓인 제품 클로즈업<br>• 한국 30대 남성이 공원에서 조깅하는 모습</span></span></label>
                         <input type="text" class="korean-request" id="korean-req-${i}"
-                               placeholder="예: 한국 젊은 여성이 거울을 보며 볼의 붉은기를 걱정하는 모습">
+                               placeholder="예: 한국 20대 여성이 카페에서 노트북을 보며 미소 짓는 모습">
                         <button class="btn-small btn-primary" onclick="regenerateWithRequest(${i})">한글 요청으로 재생성</button>
                     </div>
                 </div>
@@ -308,5 +308,97 @@ function escapeHtml(str) {
     div.textContent = str;
     return div.innerHTML;
 }
+
+// ── 도움말 툴팁 (overflow:hidden 탈출) ──
+
+function closeHelpTip() {
+    const f = document.querySelector('.help-tip-floating');
+    const b = document.querySelector('.help-tip-backdrop');
+    if (f) f.remove();
+    if (b) b.remove();
+}
+
+function openHelpTip(tipEl) {
+    closeHelpTip();
+    const content = tipEl.querySelector('.help-tip-content');
+    if (!content) return;
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'help-tip-backdrop';
+    backdrop.addEventListener('click', closeHelpTip);
+    document.body.appendChild(backdrop);
+
+    const floating = document.createElement('div');
+    floating.className = 'help-tip-floating';
+    floating.innerHTML = content.innerHTML;
+    document.body.appendChild(floating);
+
+    const rect = tipEl.getBoundingClientRect();
+    const fw = floating.offsetWidth;
+    const fh = floating.offsetHeight;
+    const gap = 10;
+
+    let top = rect.top - fh - gap;
+    if (top < 8) {
+        top = rect.bottom + gap;
+        floating.classList.add('below');
+    }
+
+    let left = rect.left + rect.width / 2 - fw / 2;
+    if (left < 16) left = 16;
+    if (left + fw > window.innerWidth - 16) left = window.innerWidth - 16 - fw;
+
+    const arrowLeft = rect.left + rect.width / 2 - left;
+    floating.style.setProperty('--arrow-left', arrowLeft + 'px');
+    floating.style.top = top + 'px';
+    floating.style.left = left + 'px';
+}
+
+(function initHelpTips() {
+    let isTouchDevice = false;
+    document.addEventListener('touchstart', function () { isTouchDevice = true; }, { once: true });
+
+    // hover (데스크톱)
+    document.addEventListener('mouseenter', function (e) {
+        if (isTouchDevice) return;
+        const tip = e.target.closest('.help-tip');
+        if (tip) openHelpTip(tip);
+    }, true);
+    document.addEventListener('mouseleave', function (e) {
+        if (isTouchDevice) return;
+        const tip = e.target.closest('.help-tip');
+        if (tip) closeHelpTip();
+    }, true);
+
+    // click (모바일 + 데스크톱 보조)
+    document.addEventListener('click', function (e) {
+        const tip = e.target.closest('.help-tip');
+        if (!tip) return;
+        e.preventDefault();
+        e.stopPropagation();
+        if (document.querySelector('.help-tip-floating')) {
+            closeHelpTip();
+        } else {
+            openHelpTip(tip);
+        }
+    });
+
+    // 키보드: Enter/Space 토글
+    document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        const tip = e.target.closest('.help-tip');
+        if (!tip) return;
+        e.preventDefault();
+        if (document.querySelector('.help-tip-floating')) {
+            closeHelpTip();
+        } else {
+            openHelpTip(tip);
+        }
+    });
+
+    // 스크롤/리사이즈 시 자동 닫기
+    window.addEventListener('scroll', closeHelpTip, true);
+    window.addEventListener('resize', closeHelpTip);
+})();
 
 loadPreview();

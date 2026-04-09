@@ -79,6 +79,18 @@ MODELS = {
             "generate_audio": False,
         },
     },
+    "veo_lite": {
+        "model_id": "fal-ai/veo3.1/lite/image-to-video",
+        "label": "Veo 3.1 Lite 720p",
+        "build_args": lambda image_url: {
+            "prompt": DEFAULT_VIDEO_PROMPT,
+            "image_url": image_url,
+            "duration": "6s",
+            "aspect_ratio": "9:16",
+            "resolution": "720p",
+            "generate_audio": False,
+        },
+    },
 }
 
 FAL_QUEUE_URL = "https://queue.fal.run"

@@ -542,9 +542,20 @@ input[type="range"] {
     font-size: 32px;
 }
 
+.style-card-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 6px 8px;
+    gap: 1px;
+}
+.style-card-res {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
 .style-card-name {
     display: block;
-    padding: 8px;
     font-size: 13px;
     font-weight: 600;
     color: var(--text);
@@ -1472,13 +1483,16 @@ input[type="range"] {
     margin-left: 4px;
 }
 
+/* 원본은 항상 숨김 — JS가 body에 복제해서 표시 */
 .help-tip-content {
-    display: none;
-    position: absolute;
-    bottom: 28px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 320px;
+    display: none !important;
+}
+
+/* body에 append되는 플로팅 툴팁 */
+.help-tip-floating {
+    position: fixed;
+    width: 300px;
+    max-width: calc(100vw - 32px);
     padding: 14px;
     background: var(--surface);
     border: 1px solid var(--border);
@@ -1489,12 +1503,39 @@ input[type="range"] {
     line-height: 1.7;
     white-space: normal;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
-    z-index: 100;
+    z-index: 9999;
+    pointer-events: auto;
 }
 
-.help-tip:hover .help-tip-content,
-.help-tip:focus .help-tip-content {
-    display: block;
+/* 말풍선 꼬리 (아래 방향 = 툴팁이 위에 뜰 때) */
+.help-tip-floating::after {
+    content: '';
+    position: absolute;
+    bottom: -6px;
+    left: var(--arrow-left, 50%);
+    width: 12px;
+    height: 12px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    transform: translateX(-50%) rotate(45deg);
+}
+
+/* 꼬리 위 방향 (툴팁이 아래에 뜰 때) */
+.help-tip-floating.below::after {
+    bottom: auto;
+    top: -6px;
+    border-right: none;
+    border-bottom: none;
+    border-left: 1px solid var(--border);
+    border-top: 1px solid var(--border);
+}
+
+/* 외부 클릭 감지용 투명 배경 */
+.help-tip-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
 }
 
 /* 반응형 */

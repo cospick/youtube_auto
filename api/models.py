@@ -32,6 +32,7 @@ class VideoMode(str, Enum):
     WAN = "wan"
     KLING = "kling"
     VEO = "veo"
+    VEO_LITE = "veo_lite"
 
 
 class JobStatus(str, Enum):

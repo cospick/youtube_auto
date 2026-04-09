@@ -59,7 +59,7 @@ async def confirm_and_render(
     # 미리보기에서 선택한 영상 모드를 DB에 저장
     job.video_mode = video_mode
 
-    if video_mode in ("hailuo", "hailuo23", "wan", "kling", "veo"):
+    if video_mode in ("hailuo", "hailuo23", "wan", "kling", "veo", "veo_lite"):
         # AI 영상 모드: 이미지 확인 → AI 클립 생성 단계로
         job.status = "generating_clips"
         job.current_step = "AI 영상 클립 생성 준비 중..."
