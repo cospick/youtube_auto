@@ -453,7 +453,7 @@ document.getElementById('voice-preview-btn').addEventListener('click', async fun
 // Step 5: BGM 설정
 // ──────────────────────────────────
 function confirmTtsSettings() {
-    goToStep(4);
+    advanceToStep(4);
     if (bgmList.length === 0) loadBgmList();
 }
 
@@ -478,7 +478,7 @@ document.getElementById('bgm-start-sec').addEventListener('change', function() {
 // Step 6: 최종 확인
 // ──────────────────────────────────
 function confirmBgmSettings() {
-    goToStep(5);
+    advanceToStep(5);
 }
 
 function buildConfirmSummary() {
@@ -641,8 +641,9 @@ function goToStep(stepIndex) {
     }, 100);
 }
 
+// 진행도(maxReachedStep)는 단조 증가만 가능. 자유 이동으로 이전 단계 재진입 시에도 진행도는 보존된다.
 function advanceToStep(stepIndex) {
-    maxReachedStep = stepIndex;
+    maxReachedStep = Math.max(maxReachedStep, stepIndex);
     goToStep(stepIndex);
 }
 
