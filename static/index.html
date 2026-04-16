@@ -61,36 +61,33 @@
                     </select>
                 </div>
 
+                <!-- 영상 목적 (화장품 카테고리일 때만 표시) -->
+                <div class="form-group" id="content-type-wrapper">
+                    <label for="content-type">영상 목적</label>
+                    <p class="field-help"><b>정보성</b>: 제품/브랜드 언급 없이 순수 정보 전달 (성분 설명은 가능, 구매 권유 금지)<br><b>홍보성</b>: 네이버 클립 쇼츠용 — 성분/역할 위주로 설명하고 마지막에 블로그 유입 유도</p>
+                    <select id="content-type" onchange="toggleContentType()">
+                        <option value="info">정보성 (순수 정보 전달)</option>
+                        <option value="promo">홍보성 (블로그 유입용)</option>
+                    </select>
+                </div>
+
                 <div class="form-group">
                     <label for="topic">주제</label>
                     <p class="field-help" id="topic-help">내 화장품이 해결하는 피부 고민을 적어주세요.<br>예: 홍조 피부 진정 방법 / 건조 피부 보습 루틴 / 모공 축소 관리법</p>
                     <input type="text" id="topic" placeholder="피부 고민 또는 관리 주제" maxlength="200">
                 </div>
 
-                <!-- 화장품 카테고리 전용 필드 -->
+                <!-- 화장품 + 홍보성 전용 필드 (페인포인트 · 성분 · 제품 이미지) -->
                 <div id="cosmetics-fields">
-                    <div class="form-group">
+                    <div class="form-group" id="painpoint-field">
                         <label for="pain-point">타겟 고민 / 페인포인트</label>
                         <p class="field-help">내 화장품을 써야 하는 사람의 증상을 적어주세요.<br>예: 얼굴 빨개짐 / 울긋불긋 / 건조한 피부 / 화장이 들뜨고 각질 일어남</p>
                         <input type="text" id="pain-point" placeholder="타겟의 피부 증상" maxlength="100">
                     </div>
-                    <div class="form-row" style="align-items: flex-end;">
-                        <div class="form-group">
-                            <label for="ingredient">핵심 성분 또는 제품 역할 (선택)</label>
-                            <p class="field-help">제품의 대표 성분이나, 제품이 문제를 어떻게 해결하는지 적어주세요.<br>예시 (성분): 시카(병풀추출물) / 히알루론산 / 나이아신아마이드<br>예시 (역할): 샴푸가 노폐물을 자극 없이 제거하고 헤어토닉이 수분을 채워줌<br>예시 (혼합): 자연유래성분이 속건조를 해결해서 가려움 해소</p>
-                            <input type="text" id="ingredient" placeholder="성분 또는 제품이 해결하는 방식" maxlength="200">
-                        </div>
-                        <div class="form-group">
-                            <label for="mention-type">제품 언급 방식</label>
-                            <select id="mention-type" onchange="toggleProductName()">
-                                <option value="comment">댓글 유도</option>
-                                <option value="direct">직접 언급</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div id="product-name-field" class="form-group" style="display:none;">
-                        <label for="product-name">제품명</label>
-                        <input type="text" id="product-name" placeholder="예: 닥터자르트 시카페어 크림" maxlength="100">
+                    <div class="form-group" id="ingredient-field">
+                        <label for="ingredient">핵심 성분 또는 제품 역할 (선택)</label>
+                        <p class="field-help">제품의 대표 성분이나, 제품이 문제를 어떻게 해결하는지 적어주세요.<br>예시 (성분): 시카(병풀추출물) / 히알루론산 / 나이아신아마이드<br>예시 (역할): 샴푸가 노폐물을 자극 없이 제거하고 헤어토닉이 수분을 채워줌<br>예시 (혼합): 자연유래성분이 속건조를 해결해서 가려움 해소</p>
+                        <input type="text" id="ingredient" placeholder="성분 또는 제품이 해결하는 방식" maxlength="200">
                     </div>
 
                     <div class="form-group" id="product-templates">
@@ -107,6 +104,13 @@
                             </div>
                         </div>
                         <input type="file" id="product-file-input" accept="image/png,image/jpeg,image/webp,image/bmp" hidden>
+                    </div>
+
+                    <!-- 화장품 + 정보성 전용 필드 (핵심 키워드) -->
+                    <div class="form-group" id="info-keyword-field">
+                        <label for="info-keyword">영상에서 다룰 핵심 키워드 (선택)</label>
+                        <p class="field-help">주제를 특정 방향으로 좁혀줍니다. 비워두면 AI가 자유롭게 선택해요.<br><b>성분·원리·개념만 입력하세요.</b> 제품명·브랜드명은 쓰면 안 됩니다 (정보성 영상은 제품 언급 금지).<br>예: 주제 "탈모 해결법" + 키워드 "맥주효모" → "탈모에 맥주효모가 효과적인 이유" 방향으로 생성<br><span style="color: var(--text-secondary);">※ 제목 생성 후 수정하면 나레이션 방향이 어긋날 수 있어요</span></p>
+                        <input type="text" id="info-keyword" placeholder="예: 맥주효모 / 비오틴 / 판토텐산" maxlength="100">
                     </div>
                 </div>
 
@@ -263,6 +267,6 @@
     </div>
 
     <script src="/static/js/auth.js"></script>
-    <script src="/static/js/app.js?v=10"></script>
+    <script src="/static/js/app.js?v=12"></script>
 </body>
 </html>

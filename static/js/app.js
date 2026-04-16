@@ -69,15 +69,39 @@ let previewAudio = null;
 // ── 카테고리 필드 토글 ──
 function toggleCategoryFields() {
     const category = document.getElementById('category').value;
+    const isCosmetics = category === 'cosmetics';
+
+    // 영상 목적 드롭다운은 화장품일 때만 표시 (카테고리 바로 다음 위치)
+    const ctWrapper = document.getElementById('content-type-wrapper');
+    if (ctWrapper) ctWrapper.style.display = isCosmetics ? '' : 'none';
+
+    // 화장품 전용 필드 컨테이너 (페인포인트 · 성분 · 제품 그리드)
     const cosmeticsFields = document.getElementById('cosmetics-fields');
-    cosmeticsFields.style.display = category === 'cosmetics' ? 'block' : 'none';
+    cosmeticsFields.style.display = isCosmetics ? 'block' : 'none';
 
     const topicHelp = document.getElementById('topic-help');
     if (topicHelp) {
-        topicHelp.innerHTML = category === 'cosmetics'
+        topicHelp.innerHTML = isCosmetics
             ? '내 화장품이 해결하는 피부 고민을 적어주세요.<br>예: 홍조 피부 진정 방법 / 건조 피부 보습 루틴 / 모공 축소 관리법'
             : '어떤 내용의 영상을 만들지 한 줄로 적어주세요.<br>예: 여름철 자외선 차단 꿀팁 / 초보 운동 루틴 / 다이어트 식단 추천';
     }
+
+    toggleContentType();
+}
+
+// ── 영상 목적(정보성/홍보성) 토글 — 화장품 카테고리에서만 의미 있음 ──
+function toggleContentType() {
+    const category = document.getElementById('category').value;
+    if (category !== 'cosmetics') return;
+    const isPromo = document.getElementById('content-type').value === 'promo';
+    // 홍보성 전용 필드
+    ['painpoint-field', 'ingredient-field', 'product-templates'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.display = isPromo ? '' : 'none';
+    });
+    // 정보성 전용 필드
+    const infoKw = document.getElementById('info-keyword-field');
+    if (infoKw) infoKw.style.display = isPromo ? 'none' : '';
 }
 
 // ──────────────────────────────────
@@ -233,28 +257,20 @@ function updateTitlePreview() {
     });
 }
 
-function toggleProductName() {
-    const mentionType = document.getElementById('mention-type').value;
-    const field = document.getElementById('product-name-field');
-    field.style.display = mentionType === 'direct' ? 'block' : 'none';
-    if (mentionType !== 'direct') {
-        document.getElementById('product-name').value = '';
-    }
-}
-
 function getCategoryPayload() {
     const category = document.getElementById('category').value;
     const payload = { category };
     if (category === 'cosmetics') {
-        const painPoint = document.getElementById('pain-point').value.trim();
-        const ingredient = document.getElementById('ingredient').value.trim();
-        const mentionType = document.getElementById('mention-type').value;
-        if (painPoint) payload.pain_point = painPoint;
-        if (ingredient) payload.ingredient = ingredient;
-        payload.mention_type = mentionType;
-        if (mentionType === 'direct') {
-            const productName = document.getElementById('product-name').value.trim();
-            if (productName) payload.product_name = productName;
+        const contentType = document.getElementById('content-type').value;
+        payload.content_type = contentType;
+        if (contentType === 'promo') {
+            const painPoint = document.getElementById('pain-point').value.trim();
+            const ingredient = document.getElementById('ingredient').value.trim();
+            if (painPoint) payload.pain_point = painPoint;
+            if (ingredient) payload.ingredient = ingredient;
+        } else if (contentType === 'info') {
+            const keyword = document.getElementById('info-keyword').value.trim();
+            if (keyword) payload.keyword = keyword;
         }
     }
     return payload;
@@ -275,6 +291,8 @@ async function generateTitles() {
 
     try {
         const payload = { topic, ...getCategoryPayload() };
+        // 제목 생성 시점의 키워드를 저장해 나레이션 단계에서 불일치 감지
+        window._keywordAtTitleGen = payload.keyword || '';
         const resp = await authFetch('/api/generate/titles', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -337,6 +355,24 @@ function confirmTitle() {
 async function generateNarration() {
     if (!selectedTitle) return;
 
+    // 핵심 키워드가 제목 생성 이후 바뀌었는지 확인 (정보성 전용)
+    const currentKeyword = (document.getElementById('info-keyword')?.value || '').trim();
+    const titleGenKeyword = window._keywordAtTitleGen || '';
+    const _ct = document.getElementById('content-type')?.value;
+    const _cat = document.getElementById('category')?.value;
+    if (_cat === 'cosmetics' && _ct === 'info' && currentKeyword !== titleGenKeyword) {
+        const ok = confirm(
+            `⚠️ 핵심 키워드가 바뀌었습니다\n` +
+            `(제목 생성 시: "${titleGenKeyword || '(비어있음)'}" → 현재: "${currentKeyword || '(비어있음)'}")\n\n` +
+            `제목은 기존 키워드 방향으로 만들어졌는데, 나레이션은 새 키워드 방향으로 생성됩니다.\n` +
+            `앞뒤가 맞지 않을 수 있어요.\n\n` +
+            `그래도 진행하시겠어요?\n(취소하고 제목부터 다시 생성하는 것을 권장합니다)`
+        );
+        if (!ok) return;
+        // 사용자가 "진행"을 선택했으므로 스냅샷 갱신 — 재생성 시 같은 경고 반복 방지
+        window._keywordAtTitleGen = currentKeyword;
+    }
+
     advanceToStep(2);
     showLoading('나레이션 생성 중...');
 
@@ -382,13 +418,14 @@ function displayNarration(data) {
     const container = document.getElementById('narration-lines');
     container.innerHTML = data.lines.map((line, i) => {
         const charCount = line.text.replace(/[?,!.~…]/g, '').length;
-        const overClass = charCount > 24 ? 'over' : '';
+        // 22자 이상: 회색 주의, 28자 초과: 빨간 경고
+        const overClass = charCount > 28 ? 'over' : '';
         return `
         <div class="narration-line">
             <div class="line-header">
                 <span class="line-num">${i + 1}</span>
                 <span class="narration-role">${roleLabels[line.role] || line.role}</span>
-                <span class="char-count ${overClass}">${charCount}/24</span>
+                <span class="char-count ${overClass}">${charCount}/28</span>
             </div>
             <input type="text" class="line-text" value="${escapeHtml(line.text)}"
                    data-index="${i}" oninput="updateCharCount(this)">
@@ -399,8 +436,8 @@ function displayNarration(data) {
 function updateCharCount(input) {
     const count = input.value.replace(/[?,!.~…]/g, '').length;
     const counter = input.parentElement.querySelector('.char-count');
-    counter.textContent = `${count}/24`;
-    counter.classList.toggle('over', count > 24);
+    counter.textContent = `${count}/28`;
+    counter.classList.toggle('over', count > 28);
 }
 
 function regenerateNarration() {
@@ -431,15 +468,14 @@ async function approveNarration() {
     showLoading('이미지 프롬프트 생성 중...');
 
     try {
-        const category = document.getElementById('category').value;
         const resp = await authFetch('/api/generate/image-prompts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 narration_lines: narrationLines,
                 style: 'realistic',
-                category,
                 topic: document.getElementById('topic').value.trim(),
+                ...getCategoryPayload(),
             }),
         });
         if (!resp.ok) {
@@ -647,12 +683,19 @@ function buildConfirmSummary() {
 async function createJob() {
     if (!scriptData) return;
 
-    // 화장품 카테고리는 제품 이미지 필수
+    // 홍보성 영상만 제품 이미지 필수. 정보성은 product_image_id를 null로 강제해
+    // 이전에 선택한 제품이 CTA에 새는 것을 방지한다.
     const category = document.getElementById('category').value;
-    if (category === 'cosmetics' && !window._selectedProductId) {
-        alert('화장품 영상은 제품 이미지를 먼저 등록하고 선택해주세요.\n(주제 설정 단계에서 등록)');
+    const contentType = category === 'cosmetics'
+        ? document.getElementById('content-type').value
+        : null;
+    if (category === 'cosmetics' && contentType === 'promo' && !window._selectedProductId) {
+        alert('홍보성 영상은 제품 이미지를 먼저 등록하고 선택해주세요.\n(주제 설정 단계에서 등록)');
         return;
     }
+    const productImageId = (contentType === 'info')
+        ? null
+        : (window._selectedProductId || null);
 
     const payload = {
         topic: document.getElementById('topic').value,
@@ -669,7 +712,7 @@ async function createJob() {
         bgm_volume: parseInt(document.getElementById('bgm-volume').value) / 100,
         bgm_filename: selectedBgm || null,
         bgm_start_sec: parseFloat(document.getElementById('bgm-start-sec').value) || 0,
-        product_image_id: window._selectedProductId || null,
+        product_image_id: productImageId,
     };
 
     showLoading('작업 등록 중...');
@@ -1019,3 +1062,4 @@ function formatTime(sec) {
 updateTimeline(0);
 loadBgmList();
 loadUserProducts();
+toggleCategoryFields();  // 카테고리 + 영상 목적 UI 초기 상태 세팅

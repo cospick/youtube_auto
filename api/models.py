@@ -56,8 +56,8 @@ class TitleRequest(BaseModel):
     category: str = "general"
     pain_point: Optional[str] = None
     ingredient: Optional[str] = None
-    mention_type: Optional[str] = None
-    product_name: Optional[str] = None
+    content_type: Optional[str] = None  # "info" | "promo" (cosmetics 전용)
+    keyword: Optional[str] = None  # "info" 전용 — 주제를 좁히는 서브키워드
 
 
 class TitleOption(BaseModel):
@@ -78,8 +78,8 @@ class NarrationRequest(BaseModel):
     category: str = "general"
     pain_point: Optional[str] = None
     ingredient: Optional[str] = None
-    mention_type: Optional[str] = None
-    product_name: Optional[str] = None
+    content_type: Optional[str] = None  # "info" | "promo" (cosmetics 전용)
+    keyword: Optional[str] = None  # "info" 전용 — 주제를 좁히는 서브키워드
 
 
 class NarrationLine(BaseModel):
@@ -98,6 +98,7 @@ class ImagePromptRequest(BaseModel):
     style: StylePreset = StylePreset.REALISTIC
     category: str = "general"
     topic: str = ""
+    content_type: Optional[str] = None  # "info" | "promo" (cosmetics 전용)
 
 
 class ScriptLine(BaseModel):

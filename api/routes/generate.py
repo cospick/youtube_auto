@@ -27,8 +27,8 @@ async def generate_titles_endpoint(request: TitleRequest, db: Session = Depends(
             category=request.category,
             pain_point=request.pain_point,
             ingredient=request.ingredient,
-            mention_type=request.mention_type,
-            product_name=request.product_name,
+            content_type=request.content_type,
+            keyword=request.keyword,
             api_key=keys["gemini"],
         )
         return TitleResponse(**result)
@@ -44,8 +44,6 @@ async def generate_narration_endpoint(request: NarrationRequest, db: Session = D
     from core.gemini_client import generate_narration as gen
     keys = resolve_user_api_keys(db, _user.id)
 
-    print(f"[DEBUG] narration request: mention_type={request.mention_type}, product_name={request.product_name}")
-
     try:
         result = await gen(
             topic=request.topic,
@@ -54,8 +52,8 @@ async def generate_narration_endpoint(request: NarrationRequest, db: Session = D
             category=request.category,
             pain_point=request.pain_point,
             ingredient=request.ingredient,
-            mention_type=request.mention_type,
-            product_name=request.product_name,
+            content_type=request.content_type,
+            keyword=request.keyword,
             api_key=keys["gemini"],
         )
         return NarrationResponse(**result)
@@ -77,6 +75,7 @@ async def generate_image_prompts_endpoint(request: ImagePromptRequest, db: Sessi
             style=request.style.value,
             category=request.category,
             topic=request.topic,
+            content_type=request.content_type,
             api_key=keys["gemini"],
         )
         return ImagePromptResponse(**result)
