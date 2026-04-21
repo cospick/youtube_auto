@@ -89,7 +89,7 @@ function toggleCategoryFields() {
     toggleContentType();
 }
 
-// ── 영상 목적(정보성/홍보성/홍보성·고정댓글) 토글 — 화장품 카테고리에서만 의미 있음 ──
+// ── 영상 목적(정보성/홍보성/홍보성 고정댓글 유도형) 토글 — 화장품 카테고리에서만 의미 있음 ──
 function toggleContentType() {
     const category = document.getElementById('category').value;
     if (category !== 'cosmetics') return;
@@ -101,7 +101,7 @@ function toggleContentType() {
     // 홍보성 전용 필드 (pain_point, ingredient)
     show('painpoint-field', ct === 'promo');
     show('ingredient-field', ct === 'promo');
-    // 제품 이미지: 홍보성은 필수, 홍보성·고정댓글은 선택(옵션). 정보성은 숨김.
+    // 제품 이미지: 홍보성은 필수, 홍보성(고정댓글 유도형)은 선택(옵션). 정보성은 숨김.
     show('product-templates', ct === 'promo' || ct === 'promo_comment');
     // 정보성 전용 필드 (keyword)
     show('info-keyword-field', ct === 'info');

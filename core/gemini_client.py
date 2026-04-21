@@ -29,7 +29,7 @@ def _load_nb2_guide() -> str:
 
 
 def _load_promo_comment_template() -> str:
-    """화장품 '홍보성·고정댓글 유도형' 나레이션 템플릿 로드 (캐싱)"""
+    """화장품 '홍보성 (고정댓글 유도형)' 나레이션 템플릿 로드 (캐싱)"""
     global _promo_comment_template
     if _promo_comment_template is None:
         path = os.path.join(os.path.dirname(__file__), "prompts", "promo_comment.md")
@@ -189,7 +189,7 @@ Output ONLY valid JSON:
 
 
 async def _generate_titles_promo_comment(topic: str, api_key: str = None) -> dict:
-    """화장품 '홍보성·고정댓글 유도형' 제목 생성 — 반말·숫자 훅 포맷."""
+    """화장품 '홍보성 (고정댓글 유도형)' 제목 생성 — 반말·숫자 훅 포맷."""
     client = get_client(api_key)
     prompt = f"""주제: "{topic}"
 이 주제로 YouTube Shorts 제목 4개를 반말 구어체로 만들어.
@@ -352,7 +352,7 @@ async def _generate_narration_promo_comment(
     selected_title: str,  # unused — 시그니처 유지
     api_key: str = None,
 ) -> dict:
-    """화장품 '홍보성·고정댓글 유도형' 나레이션 — Structured Output 방식.
+    """화장품 '홍보성 (고정댓글 유도형)' 나레이션 — Structured Output 방식.
 
     프롬프트는 JSON 지시 없이 자유 산문으로 요청하고, SDK의 response_schema로
     JSON 구조를 강제한다. 이 구조가 Gemini Web UI와 동일한 입력 조건을 재현해

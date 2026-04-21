@@ -64,11 +64,11 @@
                 <!-- 영상 목적 (화장품 카테고리일 때만 표시) -->
                 <div class="form-group" id="content-type-wrapper">
                     <label for="content-type">영상 목적</label>
-                    <p class="field-help"><b>정보성</b>: 제품/브랜드 언급 없이 순수 정보 전달 (성분 설명은 가능, 구매 권유 금지)<br><b>홍보성</b>: 네이버 클립 쇼츠용 — 성분/역할 위주로 설명하고 마지막에 블로그 유입 유도<br><b>홍보성·고정댓글 유도형</b>: 본문은 문제·호기심만, 해답은 고정 댓글로 유도 (주제만 입력, 5줄 반말)</p>
+                    <p class="field-help"><b>정보성</b>: 제품/브랜드 언급 없이 순수 정보 전달 (성분 설명은 가능, 구매 권유 금지)<br><b>홍보성</b>: 네이버 클립 쇼츠용 — 성분/역할 위주로 설명하고 마지막에 블로그 유입 유도<br><b>홍보성 (고정댓글 유도형)</b>: 본문은 문제·호기심만, 해답은 고정 댓글로 유도 (주제만 입력, 5줄 반말)</p>
                     <select id="content-type" onchange="toggleContentType()">
                         <option value="info">정보성 (순수 정보 전달)</option>
                         <option value="promo">홍보성 (블로그 유입용)</option>
-                        <option value="promo_comment">홍보성·고정댓글 유도형</option>
+                        <option value="promo_comment">홍보성 (고정댓글 유도형)</option>
                     </select>
                 </div>
 
@@ -213,7 +213,7 @@
                     </div>
                 </div>
 
-                <button class="btn-primary" onclick="confirmTtsSettings()">다음: BGM 설정</button>
+                <button class="btn-primary" onclick="confirmTtsSettings()">나레이션 음성 만들기</button>
             </div>
         </section>
 
