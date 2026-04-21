@@ -182,15 +182,9 @@ async def preview_build(
         )
     except Exception as e:
         import shutil, traceback
-        # 서버 stdout에 전체 트레이스백 + 세션 디렉토리 상태 기록 (디버깅용)
+        # 서버 stdout에 전체 트레이스백 기록 (향후 디버깅용)
         print(f"[preview-build] TTS 생성 실패 session={session_id} err={e}")
         traceback.print_exc()
-        if os.path.isdir(session_dir):
-            try:
-                files = os.listdir(session_dir)
-                print(f"[preview-build] 세션에 저장된 파일: {files}")
-            except Exception:
-                pass
         shutil.rmtree(session_dir, ignore_errors=True)
         raise HTTPException(500, f"TTS 생성 실패: {e}")
 

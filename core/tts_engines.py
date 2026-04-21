@@ -12,8 +12,9 @@ V21_ONLY_VOICES = {
     "tc_61de29497924994f5abd68db",
 }
 
-# 병렬 요청 시 rate limit 보수 대응 — 세마포어 동시 3개
-_TYPECAST_MAX_CONCURRENCY = 3
+# 동시 요청 개수. 디버깅 중: 1로 낮춰 순차 처리 (병렬 처리 때 sent_XX.wav
+# 파일이 간헐적으로 손상되는 현상 격리). 원인 확정 후 다시 2~3으로 복원.
+_TYPECAST_MAX_CONCURRENCY = 1
 
 
 def _generate_one_sentence_typecast(tts_dir, index, sent, headers, vid, model, speed, emotion):
