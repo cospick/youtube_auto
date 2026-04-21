@@ -1,6 +1,5 @@
 """TTS 음성 미리듣기 엔드포인트"""
 
-import asyncio
 import os
 import re
 
@@ -116,8 +115,8 @@ async def tts_preview(
         sentences = [SAMPLE_TEXT]
 
         emo = emotion if emotion != "normal" else None
-        await asyncio.to_thread(
-            generate_tts_typecast, tmp_dir, sentences,
+        await generate_tts_typecast(
+            tmp_dir, sentences,
             voice_id=voice_id, speed=speed, emotion=emo,
             api_key=keys["typecast"],
         )

@@ -75,8 +75,8 @@ async def assemble_shorts(job_id: str, config: dict, progress_callback=None):
     else:
         _update(progress_callback, job_id, "generating_tts", 0.4, "TTS 나레이션 생성 중...")
         tc_api_key = config.get("typecast_api_key")
-        await asyncio.to_thread(
-            generate_tts_typecast, tts_dir, sentences, voice_id=voice_id, speed=tts_speed, emotion=emotion, api_key=tc_api_key
+        await generate_tts_typecast(
+            tts_dir, sentences, voice_id=voice_id, speed=tts_speed, emotion=emotion, api_key=tc_api_key
         )
 
     sentence_durations = [
