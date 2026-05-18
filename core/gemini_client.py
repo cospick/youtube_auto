@@ -686,6 +686,8 @@ async def korean_to_nb2_prompt(korean_request: str, narration_text: str, api_key
 - 사용자의 요청 의도를 정확히 반영한 영어 프롬프트를 작성
 - 키워드 나열이 아닌 서술형 문장으로 작성 (Narrative over Keywords)
 - 사람이 등장할 경우 반드시 "Korean"을 명시
+- 사용자의 한글 요청과 나레이션이 인물(성별/연령/실명)을 명시하지 않으면 "a Korean woman in her 20s"를 기본값으로 사용
+- 사용자가 명시적으로 다른 인물(남자, 노인, 아이 등)을 적었다면 그 묘사를 그대로 따른다
 - 60단어 이내
 - 텍스트/글자/워터마크 절대 포함 금지
 - 카메라, 조명, 분위기를 서술적으로 묘사
@@ -748,7 +750,7 @@ Planning rules:
 - For each line, write a specific English image prompt that fits that exact line and the surrounding lines.
 - Avoid generic stock scenes. Make each shot carry the script's logic.
 - Maintain continuity using anchors such as same person, same workspace, same device setup, same mood, or a deliberate contrast.
-- If people appear, specify Korean.
+- If people appear, default to "a Korean woman in her 20s" unless the script's wording clearly specifies a different person (e.g., an elderly man, a child, a named real person, an explicitly male or older subject). When the script is ambiguous about who appears, always choose a Korean woman in her 20s.
 - If the script names a real product, app, platform, or brand, keep that context naturally when it is important to the scene.
 - Avoid captions, subtitles, watermarks, and readable screen text.
 - Each image prompt must be narrative, one clear scene, under 70 words.
@@ -761,7 +763,7 @@ Output ONLY valid JSON in this exact shape:
   "inferred_topic": "one sentence in Korean",
   "narrative_summary": "one concise Korean paragraph",
   "visual_bible": {{
-    "main_subject": "stable subject or null",
+    "main_subject": "stable subject; if the script does not clearly state who the subject is, set this to 'a Korean woman in her 20s'",
     "primary_settings": ["..."],
     "tone": "...",
     "continuity_rules": ["..."],
