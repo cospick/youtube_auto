@@ -338,25 +338,48 @@ async def assemble_shorts(job_id: str, config: dict, progress_callback=None):
 
     all_filters = title_filters + sub_filters
     output_path = os.path.join(output_dir, "shorts_final.mp4")
+    # 재제작 시 기존 완성본을 ffmpeg가 직접 덮어쓰면, 중간에 실패할 경우
+    # 작업이력의 영상이 손상될 수 있다. tmp 파일로 렌더한 뒤 atomic replace.
+    tmp_output = os.path.join(output_dir, "shorts_final.tmp.mp4")
+    # 이전 빌드의 tmp가 남아 있을 수 있으므로 제거
+    if os.path.exists(tmp_output):
+        try:
+            os.remove(tmp_output)
+        except Exception:
+            pass
 
-    if all_filters:
-        # Windows에서 인라인 -vf는 경로/한글 이스케이핑 문제가 있으므로
-        # filter_script 파일로 전달
-        filter_str = ",".join(all_filters)
-        filter_script = os.path.join(temp_dir, "subtitle_filter.txt")
-        with open(filter_script, "w", encoding="utf-8") as f:
-            f.write(filter_str)
-        await asyncio.to_thread(
-            run,
-            f'ffmpeg -y -i "{audio_out}" '
-            f'-filter_script:v "{filter_script}" '
-            f'-c:v libx264 -preset fast -crf 18 -c:a copy "{output_path}"',
-        )
-    else:
-        await asyncio.to_thread(
-            run,
-            f'ffmpeg -y -i "{audio_out}" -c copy "{output_path}"',
-        )
+    try:
+        if all_filters:
+            # Windows에서 인라인 -vf는 경로/한글 이스케이핑 문제가 있으므로
+            # filter_script 파일로 전달
+            filter_str = ",".join(all_filters)
+            filter_script = os.path.join(temp_dir, "subtitle_filter.txt")
+            with open(filter_script, "w", encoding="utf-8") as f:
+                f.write(filter_str)
+            await asyncio.to_thread(
+                run,
+                f'ffmpeg -y -i "{audio_out}" '
+                f'-filter_script:v "{filter_script}" '
+                f'-c:v libx264 -preset fast -crf 18 -c:a copy "{tmp_output}"',
+            )
+        else:
+            await asyncio.to_thread(
+                run,
+                f'ffmpeg -y -i "{audio_out}" -c copy "{tmp_output}"',
+            )
+
+        if not os.path.exists(tmp_output) or os.path.getsize(tmp_output) == 0:
+            raise RuntimeError("최종 영상 출력이 비어 있습니다")
+
+        # 성공 시에만 final 위치로 atomic replace
+        os.replace(tmp_output, output_path)
+    finally:
+        # 실패 시 tmp 정리
+        if os.path.exists(tmp_output):
+            try:
+                os.remove(tmp_output)
+            except Exception:
+                pass
 
     # ── 완료 ──
     _update(progress_callback, job_id, "completed", 1.0, "완료!")

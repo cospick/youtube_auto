@@ -341,19 +341,13 @@ async def split_line(
         new_lines = lines[:L] + [_pending_ai_line(""), cur] + lines[L + 1:]
         new_sources = sources[:L] + ["ai", source] + sources[L + 1:]
     else:
-        ai_owned = _is_ai_owned_asset(job_dir, cur, L, source)
+        # 가운데 split: first 줄은 line_id·이미지·자산을 그대로 보존.
+        # edit-line이 텍스트 변경 시 이미지를 유지하는 정책과 일관. 사용자가 이미지를 새 텍스트와
+        # 다시 맞추려면 줄별 "AI 이미지 다시 생성" 버튼으로 명시적 재생성.
         first = {**cur, "text": body.before}
-        if ai_owned:
-            clear_line_visual_fields(first, status="pending")
-            first_source = "ai"
-        else:
-            first_source = source
         second = _pending_ai_line(body.after)
         new_lines = lines[:L] + [first, second] + lines[L + 1:]
-        new_sources = sources[:L] + [first_source, "ai"] + sources[L + 1:]
-
-        if ai_owned:
-            await _discard_line_assets(job_id, job_dir, cur, L)
+        new_sources = sources[:L] + [source, "ai"] + sources[L + 1:]
 
     job.script_json = json.dumps(new_lines, ensure_ascii=False)
     job.line_sources_json = json.dumps(new_sources, ensure_ascii=False)
@@ -394,15 +388,10 @@ async def edit_line(
         return {"ok": True}
 
     lines[body.line_index]["text"] = body.text
-    sources = json.loads(job.line_sources_json or "[]")
-    job_dir = os.path.join(settings.STORAGE_DIR, job_id)
-    source = sources[body.line_index] if body.line_index < len(sources) else "ai"
-    if _is_ai_owned_asset(job_dir, lines[body.line_index], body.line_index, source):
-        await _discard_line_assets(job_id, job_dir, lines[body.line_index], body.line_index)
-        clear_line_visual_fields(lines[body.line_index], status="pending")
-        if body.line_index < len(sources):
-            sources[body.line_index] = "ai"
-        job.line_sources_json = json.dumps(sources, ensure_ascii=False)
+    # 이미지 보존 정책: 텍스트가 바뀌어도 AI가 만든 이미지든 사용자 업로드든
+    # 자산 파일·status·sources를 건드리지 않는다. 사용자가 명시적으로
+    # regenerate-image를 누를 때만 재생성. (TTS는 confirm 시점에 변경 줄만 재합성.)
+    # visual_plan은 텍스트 변경으로 stale해지므로 무효화 → 다음 이미지 생성 시 재도출.
     invalidate_visual_plan(job)
     job.script_json = json.dumps(lines, ensure_ascii=False)
     db.commit()
@@ -459,11 +448,9 @@ async def merge_line(
     # 텍스트 단순 연결 — 분할 때 보존된 공백을 그대로 복원
     lines[L - 1]["text"] = (lines[L - 1].get("text") or "") + (lines[L].get("text") or "")
 
-    prev_source = sources[L - 1]
-    if _is_ai_owned_asset(job_dir, lines[L - 1], L - 1, prev_source):
-        await _discard_line_assets(job_id, job_dir, lines[L - 1], L - 1)
-        clear_line_visual_fields(lines[L - 1], status="pending")
-        sources[L - 1] = "ai"
+    # merge: prev(L-1) 줄의 line_id·이미지·자산은 보존 (edit-line/split 정책과 일관).
+    # 사라지는 L 줄의 자산만 정리. 사용자가 합쳐진 텍스트에 맞춰 이미지를 새로 만들고 싶으면
+    # 줄별 "AI 이미지 다시 생성" 버튼으로 재생성.
     await _discard_line_assets(job_id, job_dir, lines[L], L)
 
     new_lines = lines[:L] + lines[L + 1:]

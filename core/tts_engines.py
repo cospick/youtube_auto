@@ -127,3 +127,40 @@ async def generate_tts_typecast(tts_dir, sentences, voice_id=None, speed=None, e
         json.dump(raw_timings, f, ensure_ascii=False, indent=2)
 
     return raw_timings
+
+
+async def generate_tts_for_indices(
+    tts_dir: str,
+    sentences: list[str],
+    indices: list[int],
+    voice_id: str | None = None,
+    speed: float | None = None,
+    emotion: str | None = None,
+    api_key: str | None = None,
+) -> dict[int, dict]:
+    """sentences 중 indices 위치만 Typecast로 합성.
+
+    incremental 재빌드용. timings_raw.json은 호출자가 갱신 책임을 가짐
+    (전체 timings 머지 후 한 번에 저장해야 일관성 유지 가능).
+
+    반환: {index: {"text", "duration"}} — indices에 해당하는 결과만.
+    """
+    if not indices:
+        return {}
+    if not api_key:
+        raise RuntimeError("Typecast API 키가 설정되지 않았습니다. 설정 화면에서 사용자 본인의 Typecast API 키를 저장해주세요.")
+
+    vid = voice_id or "tc_62e8f21e979b3860fe2f6a24"
+    model = "ssfm-v21" if vid in V21_ONLY_VOICES else "ssfm-v30"
+    headers = {"X-API-KEY": api_key, "Content-Type": "application/json"}
+    sem = asyncio.Semaphore(_TYPECAST_MAX_CONCURRENCY)
+
+    async def _one(i: int):
+        async with sem:
+            return await asyncio.to_thread(
+                _generate_one_sentence_typecast,
+                tts_dir, i, sentences[i], headers, vid, model, speed, emotion,
+            )
+
+    results = await asyncio.gather(*[_one(i) for i in indices])
+    return {idx: r for idx, r in zip(indices, results)}

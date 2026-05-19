@@ -92,6 +92,13 @@ class Job(Base):
     r2_synced = Column(String, default="none")
     files_expired_at = Column(DateTime, nullable=True)
 
+    # 카드 B: 완료 후 사용자가 "다운로드/새 영상"을 누르기 전까지 중간 산출물(images/clips/tts/temp) 보존 여부.
+    # 기본 True → 기존 완료 job은 backfill로 "편집 불가" 상태. 신규 완료 job만 worker가 False로 SET.
+    intermediates_purged = Column(Boolean, default=True, nullable=False)
+
+    # 카드 B 재제작 시 변경 감지용: 직전 render의 voice 시그니처 + line_id 순서 + line_id별 text_hash JSON.
+    last_render_signature = Column(Text, nullable=True)
+
     # 시간
     created_at = Column(DateTime, default=utc_now_naive)
     completed_at = Column(DateTime, nullable=True)

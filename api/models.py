@@ -213,7 +213,12 @@ class TtsPreviewBuildRequest(BaseModel):
     voice_id: str
     speed: float = Field(default=1.0, ge=0.5, le=2.0)
     emotion: Optional[str] = None
-    # 아래는 커밋 5의 6초 초과 분리에서 사용 (현재는 무시)
+    # 카드 B incremental rebuild — sentences와 1:1 대응하는 line_id 목록.
+    # 제공되면 기존 세션의 line_id별 text_hash와 비교해 변경 줄만 재생성.
+    line_ids: Optional[list[str]] = None
+    # 같은 세션으로 재빌드할 때 전달. 음성 시그니처가 같으면 incremental, 다르면 전체 재생성.
+    existing_session_id: Optional[str] = None
+    # 6초 초과 분리는 첫 빌드에만 적용. incremental 모드(existing_session_id 제공 시)에서는 건너뜀.
     content_type: Optional[str] = None
     topic: Optional[str] = None
     style: Optional[str] = None
@@ -256,6 +261,9 @@ class JobResponse(BaseModel):
     task_kind: Optional[str] = None
     task_status: Optional[str] = None
     task_error: Optional[str] = None
+    # 작업이력 UI의 "편집 계속" 버튼 노출 여부.
+    # reopen_job 라우트 검증 조건과 일치하게 _job_to_response에서 계산. 활성 task는 N+1 회피 위해 생략.
+    can_reopen: bool = False
 
 
 class PreviewResponse(BaseModel):

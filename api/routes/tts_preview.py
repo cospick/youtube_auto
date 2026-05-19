@@ -14,7 +14,7 @@ import requests as http_requests
 
 from sqlalchemy.orm import Session
 from config import settings
-from core.tts_engines import generate_tts_typecast
+from core.tts_engines import generate_tts_typecast, generate_tts_for_indices
 from core.line_splitter import (
     detect_overlong_lines,
     split_long_line_with_gemini,
@@ -25,12 +25,24 @@ from core.audio_splitter import (
     cut_wav_at,
     get_wav_duration,
 )
+from core.user_assets_visual import line_text_hash
 from api.deps import get_approved_user, resolve_user_api_keys
 from api.models import TtsPreviewBuildRequest
 from db.database import get_db
 from db.models import User
 
 router = APIRouter(prefix="/api/tts", tags=["tts"])
+
+# 세션별 동시 빌드 방지 (per-process). 다중 워커 환경에선 파일락 보강 필요.
+_BUILD_LOCKS: dict[str, asyncio.Lock] = {}
+
+
+def _get_session_lock(session_id: str) -> asyncio.Lock:
+    lock = _BUILD_LOCKS.get(session_id)
+    if lock is None:
+        lock = asyncio.Lock()
+        _BUILD_LOCKS[session_id] = lock
+    return lock
 
 TTS_SESSIONS_DIR = os.path.join(settings.STORAGE_DIR, "tts_sessions")
 LINE_DURATION_THRESHOLD = 6.0  # veo 3.1 lite 클립당 6초 고정 제약
@@ -170,6 +182,211 @@ async def tts_preview(
 # 이후 Job 생성 시 job_dir/tts/ 로 이동돼 영상 조립에서 재사용된다(재생성 스킵).
 # 커밋 5에서 promo_comment 한정 6초 초과 자동 분리가 이 엔드포인트에 통합될 예정.
 
+def _voice_signature(req: TtsPreviewBuildRequest) -> list:
+    """voice 변경 감지용 4-tuple — 직렬화 안전하게 list로 반환."""
+    return [req.voice_id, float(req.speed), req.emotion or None, "typecast"]
+
+
+def _load_signature(session_dir: str) -> dict | None:
+    """signature.json 안전 로드. 손상/구버전이면 None 반환."""
+    path = os.path.join(session_dir, "signature.json")
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        # 최소 필드 검증 (구버전이면 None으로 떨어져 full rebuild)
+        if not isinstance(data, dict):
+            return None
+        if not all(k in data for k in ("voice", "line_order", "line_hashes")):
+            return None
+        return data
+    except Exception:
+        return None
+
+
+def _save_signature(session_dir: str, voice: list, line_order: list[str], line_hashes: dict[str, str]) -> None:
+    payload = {
+        "voice": voice,
+        "line_order": list(line_order),
+        "line_hashes": dict(line_hashes),
+    }
+    path = os.path.join(session_dir, "signature.json")
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(payload, f, ensure_ascii=False, indent=2)
+    os.replace(tmp, path)
+
+
+def _measure_wav_duration_safe(path: str) -> float:
+    # Python 3.13에서 stdlib audioop 제거 → pydub 기반 get_wav_duration이 import 단계에서 fail.
+    # PCM wav는 stdlib wave로 정확히 측정 가능하므로 그걸 우선 시도.
+    try:
+        import wave
+        with wave.open(path, "rb") as w:
+            frames = w.getnframes()
+            rate = w.getframerate()
+            if rate:
+                return frames / float(rate)
+    except Exception:
+        pass
+    # 비-PCM wav 대비: pydub 시도 (Python 3.9 등 호환 환경)
+    try:
+        return float(get_wav_duration(path))
+    except Exception:
+        pass
+    # 마지막 fallback: ffprobe
+    try:
+        import subprocess
+        out = subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+             "-of", "default=noprint_wrappers=1:nokey=1", path],
+            capture_output=True, text=True, timeout=10,
+        )
+        if out.returncode == 0 and out.stdout.strip():
+            return float(out.stdout.strip())
+    except Exception:
+        pass
+    return 0.0
+
+
+async def _rebuild_full(session_dir: str, req: TtsPreviewBuildRequest, typecast_key: str, gemini_key: str | None):
+    """기존 동작과 동일한 full rebuild — 모든 wav 새로 생성 + promo_comment 분리."""
+    # 세션 정리 후 새 wav 생성
+    if os.path.exists(session_dir):
+        shutil.rmtree(session_dir)
+    os.makedirs(session_dir, exist_ok=True)
+
+    emotion = req.emotion if req.emotion and req.emotion != "normal" else None
+    raw_timings = await generate_tts_typecast(
+        session_dir,
+        req.sentences,
+        voice_id=req.voice_id,
+        speed=req.speed,
+        emotion=emotion,
+        api_key=typecast_key,
+    )
+    durations = [t["duration"] for t in raw_timings]
+    expanded_sentences = list(req.sentences)
+    split_from_map: dict[int, int] = {}
+
+    if req.content_type == "promo_comment":
+        overlong = detect_overlong_lines(durations, LINE_DURATION_THRESHOLD)
+        if overlong:
+            try:
+                expanded_sentences, durations, split_from_map = await _split_overlong_lines(
+                    session_dir=session_dir,
+                    sentences=req.sentences,
+                    durations=durations,
+                    overlong_indices=overlong,
+                    topic=req.topic or "",
+                    style=req.style or "realistic",
+                    gemini_api_key=gemini_key,
+                )
+            except Exception as e:
+                import traceback
+                print(f"[preview-build] 분리 실패 err={e}")
+                traceback.print_exc()
+                # 분리 실패해도 원본은 유지
+
+    return expanded_sentences, durations, split_from_map
+
+
+async def _rebuild_incremental(
+    session_dir: str,
+    req: TtsPreviewBuildRequest,
+    typecast_key: str,
+    prev_sig: dict,
+) -> tuple[list[str], list[float], list[int]]:
+    """incremental rebuild — 변경된 줄만 Typecast 재호출.
+
+    전제:
+    - req.line_ids는 req.sentences와 1:1 길이
+    - prev_sig의 voice와 현재 voice가 일치
+    - prev_sig.line_order / line_hashes 형식이 유효
+
+    동작:
+    - 기존 sent_*.wav 를 _swap/{line_id}.wav 로 rename
+    - 새 line_order 따라가며: text_hash 동일하면 _swap에서 새 인덱스로 rename, 다르면 regen 인덱스 수집
+    - generate_tts_for_indices로 변경 인덱스만 합성
+    - 모든 줄의 duration을 wav에서 재측정 (재사용된 wav 포함)
+
+    반환: (sentences, durations, indices_to_regen)
+    """
+    n = len(req.sentences)
+    line_ids = list(req.line_ids or [])
+    if len(line_ids) != n:
+        raise HTTPException(400, "line_ids와 sentences의 길이가 다릅니다")
+    new_hashes = {lid: line_text_hash(req.sentences[i]) for i, lid in enumerate(line_ids)}
+
+    prev_order: list[str] = list(prev_sig.get("line_order") or [])
+    prev_hashes: dict[str, str] = dict(prev_sig.get("line_hashes") or {})
+
+    # 기존 wav를 _swap/{line_id}.wav 로 옮김
+    swap_dir = os.path.join(session_dir, "_swap")
+    if os.path.exists(swap_dir):
+        shutil.rmtree(swap_dir)
+    os.makedirs(swap_dir, exist_ok=True)
+    for old_idx, lid in enumerate(prev_order):
+        src = os.path.join(session_dir, f"sent_{old_idx:02d}.wav")
+        if os.path.exists(src) and lid:
+            try:
+                os.rename(src, os.path.join(swap_dir, f"{lid}.wav"))
+            except Exception:
+                pass
+
+    # 잔존 sent_*.wav (signature에 없는 인덱스) 제거
+    for name in os.listdir(session_dir):
+        if name.startswith("sent_") and name.endswith(".wav"):
+            try:
+                os.remove(os.path.join(session_dir, name))
+            except Exception:
+                pass
+
+    # 새 line_order에 맞춰 _swap에서 복원 또는 재생성 대상에 추가
+    indices_to_regen: list[int] = []
+    for new_idx, lid in enumerate(line_ids):
+        dest = os.path.join(session_dir, f"sent_{new_idx:02d}.wav")
+        swap_path = os.path.join(swap_dir, f"{lid}.wav") if lid else ""
+        if (
+            lid
+            and prev_hashes.get(lid) == new_hashes[lid]
+            and swap_path
+            and os.path.exists(swap_path)
+        ):
+            try:
+                os.rename(swap_path, dest)
+                continue
+            except Exception:
+                # 복원 실패 → 재생성으로 폴백
+                pass
+        indices_to_regen.append(new_idx)
+
+    # _swap에 남은 wav는 삭제된 줄 → 정리
+    shutil.rmtree(swap_dir, ignore_errors=True)
+
+    # 변경 줄만 Typecast 호출
+    if indices_to_regen:
+        emotion = req.emotion if req.emotion and req.emotion != "normal" else None
+        await generate_tts_for_indices(
+            session_dir,
+            req.sentences,
+            indices_to_regen,
+            voice_id=req.voice_id,
+            speed=req.speed,
+            emotion=emotion,
+            api_key=typecast_key,
+        )
+
+    # 모든 줄 duration 측정 (재사용 줄도 wav 기반으로 재측정 — 단일 진실원)
+    durations: list[float] = []
+    for i in range(n):
+        wav_path = os.path.join(session_dir, f"sent_{i:02d}.wav")
+        durations.append(round(_measure_wav_duration_safe(wav_path), 2))
+
+    return list(req.sentences), durations, indices_to_regen
+
+
 @router.post("/preview-build")
 async def preview_build(
     req: TtsPreviewBuildRequest,
@@ -182,75 +399,82 @@ async def preview_build(
     keys = resolve_user_api_keys(db, _user.id)
     if not keys["typecast"]:
         raise HTTPException(400, "Typecast API 키가 설정되지 않았습니다. 설정 페이지에서 사용자 본인의 키를 입력하세요.")
-    session_id = uuid.uuid4().hex[:12]
+
+    # 세션 id 결정: 재빌드면 기존 id 재사용, 아니면 새로 생성
+    existing_id = req.existing_session_id
+    if existing_id and re.match(r"^[a-f0-9]{12}$", existing_id):
+        session_id = existing_id
+    else:
+        session_id = uuid.uuid4().hex[:12]
     session_dir = os.path.join(TTS_SESSIONS_DIR, session_id)
-    os.makedirs(session_dir, exist_ok=True)
 
-    emotion = req.emotion if req.emotion and req.emotion != "normal" else None
+    new_voice = _voice_signature(req)
+    line_ids_provided = bool(req.line_ids) and len(req.line_ids or []) == len(req.sentences)
 
-    try:
-        raw_timings = await generate_tts_typecast(
-            session_dir,
-            req.sentences,
-            voice_id=req.voice_id,
-            speed=req.speed,
-            emotion=emotion,
-            api_key=keys["typecast"],
+    lock = _get_session_lock(session_id)
+    async with lock:
+        prev_sig = _load_signature(session_dir) if os.path.isdir(session_dir) else None
+
+        incremental = (
+            line_ids_provided
+            and prev_sig is not None
+            and list(prev_sig.get("voice") or []) == new_voice
+            and os.path.isdir(session_dir)
         )
-    except Exception as e:
-        import shutil, traceback
-        # 서버 stdout에 전체 트레이스백 기록 (향후 디버깅용)
-        print(f"[preview-build] TTS 생성 실패 session={session_id} err={e}")
-        traceback.print_exc()
-        shutil.rmtree(session_dir, ignore_errors=True)
-        raise HTTPException(500, f"TTS 생성 실패: {e}")
 
-    durations = [t["duration"] for t in raw_timings]
-    expanded_sentences = list(req.sentences)
-    split_from_map: dict[int, int] = {}  # 새 인덱스 → 원본 인덱스 (분리 추적용)
-
-    # promo_comment 전용: 6초 초과 줄 자동 분리 + wav 파일 재배치
-    if req.content_type == "promo_comment":
-        overlong = detect_overlong_lines(durations, LINE_DURATION_THRESHOLD)
-        if overlong:
-            try:
-                expanded_sentences, durations, split_from_map = await _split_overlong_lines(
-                    session_dir=session_dir,
-                    sentences=req.sentences,
-                    durations=durations,
-                    overlong_indices=overlong,
-                    topic=req.topic or "",
-                    style=req.style or "realistic",
-                    gemini_api_key=keys["gemini"],
+        try:
+            if incremental:
+                expanded_sentences, durations, regen_indices = await _rebuild_incremental(
+                    session_dir, req, keys["typecast"], prev_sig
                 )
-            except Exception as e:
-                import traceback
-                print(f"[preview-build] 분리 실패 session={session_id} err={e}")
-                traceback.print_exc()
-                # 분리 실패는 TTS 생성 자체의 실패가 아니므로 세션은 유지
-                # (원본 5줄로라도 진행 — 6초 초과 줄은 영상에서 잘릴 뿐)
+                split_from_map: dict[int, int] = {}
+            else:
+                expanded_sentences, durations, split_from_map = await _rebuild_full(
+                    session_dir, req, keys["typecast"], keys["gemini"]
+                )
+                regen_indices = list(range(len(expanded_sentences)))
+        except HTTPException:
+            raise
+        except Exception as e:
+            import traceback
+            print(f"[preview-build] TTS 생성 실패 session={session_id} err={e}")
+            traceback.print_exc()
+            if not incremental and os.path.exists(session_dir):
+                shutil.rmtree(session_dir, ignore_errors=True)
+            raise HTTPException(500, f"TTS 생성 실패: {e}")
 
-    # timings_raw.json 재생성 (기존 파일 덮어쓰기) — 조립기가 이 파일을 읽음
-    raw_timings_out = [
-        {"text": s, "duration": d}
-        for s, d in zip(expanded_sentences, durations)
-    ]
-    with open(os.path.join(session_dir, "timings_raw.json"), "w", encoding="utf-8") as f:
-        json.dump(raw_timings_out, f, ensure_ascii=False, indent=2)
+        # timings_raw.json 갱신
+        raw_timings_out = [
+            {"text": s, "duration": d}
+            for s, d in zip(expanded_sentences, durations)
+        ]
+        with open(os.path.join(session_dir, "timings_raw.json"), "w", encoding="utf-8") as f:
+            json.dump(raw_timings_out, f, ensure_ascii=False, indent=2)
 
-    # 세션 메타 저장 (Job 생성 시 사용, 24h GC 대상)
-    metadata = {
-        "voice_id": req.voice_id,
-        "speed": req.speed,
-        "emotion": req.emotion,
-        "original_sentences": list(req.sentences),
-        "expanded_sentences": expanded_sentences,
-        "durations": durations,
-        "split_from_map": split_from_map,  # 빈 dict면 분리 없음
-        "content_type": req.content_type,
-    }
-    with open(os.path.join(session_dir, "metadata.json"), "w", encoding="utf-8") as f:
-        json.dump(metadata, f, ensure_ascii=False, indent=2)
+        # metadata.json (기존 형식 유지 — 호환성)
+        metadata = {
+            "voice_id": req.voice_id,
+            "speed": req.speed,
+            "emotion": req.emotion,
+            "original_sentences": list(req.sentences),
+            "expanded_sentences": expanded_sentences,
+            "durations": durations,
+            "split_from_map": split_from_map,
+            "content_type": req.content_type,
+        }
+        with open(os.path.join(session_dir, "metadata.json"), "w", encoding="utf-8") as f:
+            json.dump(metadata, f, ensure_ascii=False, indent=2)
+
+        # signature.json — line_ids 제공된 경우에만 (incremental 가능 조건)
+        if line_ids_provided and not split_from_map:
+            # promo_comment 분리가 일어났다면 sentence 수가 바뀌므로 line_id 매핑 불가 → signature 저장 보류.
+            # (분리는 카드 A 전용 흐름이라 카드 B incremental 시나리오와 충돌하지 않음.)
+            line_order = list(req.line_ids or [])
+            line_hashes = {
+                lid: line_text_hash(req.sentences[i])
+                for i, lid in enumerate(line_order)
+            }
+            _save_signature(session_dir, new_voice, line_order, line_hashes)
 
     return {
         "session_id": session_id,
@@ -258,6 +482,8 @@ async def preview_build(
         "durations": durations,
         "split_count": len(split_from_map),
         "expanded_sentences": expanded_sentences,
+        "regenerated_indices": regen_indices,
+        "incremental": incremental,
     }
 
 

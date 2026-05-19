@@ -111,7 +111,66 @@ async def upload_job_files(job_id: str, file_type: str) -> bool:
             if not await upload_file(output, r2_key):
                 all_ok = False
 
+    elif file_type == "tts":
+        tts_dir = os.path.join(job_dir, "tts")
+        if os.path.isdir(tts_dir):
+            for name in sorted(os.listdir(tts_dir)):
+                if name.startswith("_") or name.startswith("."):
+                    continue
+                src = os.path.join(tts_dir, name)
+                if not os.path.isfile(src):
+                    continue
+                r2_key = f"jobs/{job_id}/tts/{name}"
+                if not await upload_file(src, r2_key):
+                    all_ok = False
+
     return all_ok
+
+
+async def download_job_tts_to_local(job_id: str) -> bool:
+    """R2의 jobs/{job_id}/tts/* 를 로컬 storage/{job_id}/tts/ 로 복구.
+    카드 B reopen 시 컨테이너 재시작 등으로 로컬 tts/가 비어 있을 때 사용."""
+    if not is_r2_enabled():
+        return False
+
+    prefix = f"jobs/{job_id}/tts/"
+    local_dir = os.path.join(settings.STORAGE_DIR, job_id, "tts")
+    os.makedirs(local_dir, exist_ok=True)
+
+    def _sync() -> int:
+        client = get_r2_client()
+        token = None
+        downloaded = 0
+        while True:
+            kwargs = {"Bucket": settings.R2_BUCKET_NAME, "Prefix": prefix}
+            if token:
+                kwargs["ContinuationToken"] = token
+            resp = client.list_objects_v2(**kwargs)
+            for obj in resp.get("Contents", []):
+                key = obj["Key"]
+                name = key.rsplit("/", 1)[-1]
+                if not name:
+                    continue
+                local_path = os.path.join(local_dir, name)
+                if os.path.exists(local_path):
+                    continue
+                try:
+                    client.download_file(settings.R2_BUCKET_NAME, key, local_path)
+                    downloaded += 1
+                except Exception as e:
+                    logger.warning(f"R2 download tts failed {key}: {e}")
+            if not resp.get("IsTruncated"):
+                break
+            token = resp.get("NextContinuationToken")
+        return downloaded
+
+    try:
+        n = await asyncio.to_thread(_sync)
+        logger.info(f"R2 → 로컬 tts 복구 ({job_id}): {n}개")
+        return True
+    except Exception as e:
+        logger.error(f"R2 download_job_tts_to_local 실패 {job_id}: {e}")
+        return False
 
 
 # ── 스트리밍 / 다운로드 ──
@@ -228,39 +287,65 @@ async def delete_job_files(job_id: str):
     await asyncio.to_thread(_delete_sync)
 
 
+def _delete_local_subdirs(job_id: str, subdirs: list[str]) -> None:
+    """로컬 storage/{job_id}/<sub>/ 디렉토리 통째 삭제."""
+    import shutil
+    job_dir = os.path.join(settings.STORAGE_DIR, job_id)
+    for sub in subdirs:
+        path = os.path.join(job_dir, sub)
+        if os.path.isdir(path):
+            try:
+                shutil.rmtree(path)
+            except Exception as e:
+                logger.warning(f"local subdir delete 실패 {path}: {e}")
+
+
 async def delete_job_intermediate_files(job_id: str) -> None:
-    """완료 후 R2 용량 절감을 위해 최종 output을 제외한 중간 산출물을 삭제."""
-    if not is_r2_enabled():
-        return
+    """완료 후 R2 + 로컬에서 최종 output을 제외한 중간 산출물(images/clips/tts/temp)을 삭제."""
+    intermediates = ["images", "clips", "tts", "temp"]
 
-    prefixes = [
-        f"jobs/{job_id}/images/",
-        f"jobs/{job_id}/clips/",
-        f"jobs/{job_id}/tts/",
-        f"jobs/{job_id}/temp/",
-    ]
+    if is_r2_enabled():
+        prefixes = [f"jobs/{job_id}/{sub}/" for sub in intermediates]
 
-    def _delete_sync():
-        client = get_r2_client()
-        for prefix in prefixes:
-            token = None
-            while True:
-                kwargs = {"Bucket": settings.R2_BUCKET_NAME, "Prefix": prefix}
-                if token:
-                    kwargs["ContinuationToken"] = token
-                try:
-                    resp = client.list_objects_v2(**kwargs)
-                    objects = resp.get("Contents", [])
-                    if objects:
-                        client.delete_objects(
-                            Bucket=settings.R2_BUCKET_NAME,
-                            Delete={"Objects": [{"Key": obj["Key"]} for obj in objects]},
-                        )
-                    if not resp.get("IsTruncated"):
+        def _delete_sync():
+            client = get_r2_client()
+            for prefix in prefixes:
+                token = None
+                while True:
+                    kwargs = {"Bucket": settings.R2_BUCKET_NAME, "Prefix": prefix}
+                    if token:
+                        kwargs["ContinuationToken"] = token
+                    try:
+                        resp = client.list_objects_v2(**kwargs)
+                        objects = resp.get("Contents", [])
+                        if objects:
+                            client.delete_objects(
+                                Bucket=settings.R2_BUCKET_NAME,
+                                Delete={"Objects": [{"Key": obj["Key"]} for obj in objects]},
+                            )
+                        if not resp.get("IsTruncated"):
+                            break
+                        token = resp.get("NextContinuationToken")
+                    except Exception as e:
+                        logger.warning(f"R2 intermediate delete failed for {prefix}: {e}")
                         break
-                    token = resp.get("NextContinuationToken")
-                except Exception as e:
-                    logger.warning(f"R2 intermediate delete failed for {prefix}: {e}")
-                    break
 
-    await asyncio.to_thread(_delete_sync)
+        await asyncio.to_thread(_delete_sync)
+
+    # 로컬 동반 삭제 — R2 활성 여부와 무관하게 항상 실행 (R2 비활성 환경 대응)
+    _delete_local_subdirs(job_id, intermediates)
+
+
+async def delete_job_all_files(job_id: str) -> None:
+    """discard용 — R2 + 로컬에서 해당 job의 모든 산출물(intermediates + output + product 등) 삭제."""
+    if is_r2_enabled():
+        await delete_job_files(job_id)  # 기존 함수: jobs/{job_id}/* 전부 삭제
+
+    # 로컬 job 디렉토리 전체 삭제
+    import shutil
+    job_dir = os.path.join(settings.STORAGE_DIR, job_id)
+    if os.path.isdir(job_dir):
+        try:
+            shutil.rmtree(job_dir)
+        except Exception as e:
+            logger.warning(f"local job dir delete 실패 {job_dir}: {e}")
