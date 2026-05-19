@@ -367,11 +367,12 @@ function renderStepperOnStatus(jobCompleted) {
 }
 
 function statusStepperClick(idx) {
-    // 1~4 단계: index.html로 돌아가며 reopen 흐름 트리거. 5단계: 현재 페이지라 no-op.
+    // 0~3 단계: index.html로 돌아가며 reopen 흐름 트리거 + 클릭한 단계로 진입.
+    // 4단계(영상 제작): 현재 페이지라 no-op.
     if (idx === 4) return;
     // 진입 시점에 stepperCardB가 true이고 영상이 완료된 상태에서만 reopen 가능.
     if (!stepperCardB) return;
-    window.location.href = '/static/index.html?job_id=' + jobId + '&restore=1';
+    window.location.href = '/static/index.html?job_id=' + jobId + '&restore=1&step=' + idx;
 }
 
 async function initCardBStepper() {
