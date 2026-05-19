@@ -23,6 +23,22 @@ from core.user_assets_visual import (
 from config import settings
 
 
+def _mark_card_b_render_complete(job_id: str, signature_json: str | None) -> None:
+    """카드 B 영상 조립 완료 후 intermediates_purged=False + last_render_signature 저장.
+    중간 산출물은 사용자가 다운로드/discard 누를 때까지 R2/로컬에 보존된다."""
+    db = SessionLocal()
+    try:
+        job = db.query(Job).filter(Job.id == job_id).first()
+        if not job:
+            return
+        job.intermediates_purged = False
+        if signature_json:
+            job.last_render_signature = signature_json
+        db.commit()
+    finally:
+        db.close()
+
+
 def _update_r2_sync(job_id: str, status: str):
     """R2 동기화 상태 업데이트"""
     db = SessionLocal()
@@ -533,6 +549,23 @@ async def render_video_for_job(job_id: str):
                 "typecast_api_key": keys["typecast"],
             }
 
+            # 카드 B 재제작 시 비교용 signature 미리 계산 (현재 상태 기준)
+            is_card_b = (getattr(job, "generation_mode", "ai_full") == "user_assets")
+            new_signature_json = None
+            if is_card_b:
+                from core.user_assets_visual import line_text_hash
+                line_order = [str(line.get("line_id") or "") for line in lines]
+                line_hashes = {
+                    lid: line_text_hash(lines[i].get("text") or "")
+                    for i, lid in enumerate(line_order)
+                    if lid
+                }
+                new_signature_json = json.dumps({
+                    "voice": [job.voice_id, float(job.tts_speed or 1.0), job.emotion, job.tts_engine or "typecast"],
+                    "line_order": line_order,
+                    "line_hashes": line_hashes,
+                }, ensure_ascii=False)
+
             video_path = await assemble_shorts(
                 job_id=job_id,
                 config=config,
@@ -544,10 +577,20 @@ async def render_video_for_job(job_id: str):
                 ok = await upload_job_files(job_id, "output")
                 if not ok:
                     raise RuntimeError("R2 최종 영상 업로드 실패")
-                await delete_job_intermediate_files(job_id)
-                _update_r2_sync(job_id, "synced")
+                if is_card_b:
+                    # 카드 B: 중간 산출물 보존(다운로드/discard 시점까지) + 컨테이너 재시작 대비 tts 업로드
+                    await upload_job_files(job_id, "tts")
+                    # images/clips는 confirm 시점에 이미 업로드돼 있음 (preview.py)
+                    _update_r2_sync(job_id, "synced")
+                else:
+                    # 카드 A: 기존 동작 — 완료 즉시 중간 산출물 삭제
+                    await delete_job_intermediate_files(job_id)
+                    _update_r2_sync(job_id, "synced")
 
+            # 영상 경로 + 카드 B 메타(intermediates_purged=False, last_render_signature) 저장
             set_video_path(job_id, video_path)
+            if is_card_b:
+                _mark_card_b_render_complete(job_id, new_signature_json)
 
         except Exception as e:
             mark_job_failed(job_id, f"영상 조립 실패: {str(e)}")

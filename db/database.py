@@ -60,6 +60,8 @@ _MIGRATIONS = {
         "generation_mode": "VARCHAR DEFAULT 'ai_full'",
         "line_sources_json": "TEXT DEFAULT '[]'",
         "visual_plan_json": "TEXT DEFAULT ''",
+        "intermediates_purged": "BOOLEAN DEFAULT TRUE NOT NULL",
+        "last_render_signature": "TEXT",
     },
     "users": {
         "gemini_api_key_enc": "VARCHAR",

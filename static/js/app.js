@@ -69,6 +69,9 @@ const STEPS_USER_ASSETS = [
         return sel && sel.selectedOptions[0] ? sel.selectedOptions[0].text : '';
     }},
     { id: 'step-bgm',         label: 'BGM',      summaryFn: () => selectedBgm ? selectedBgm.replace(/\.(mp3|wav|ogg)$/i, '') : '없음' },
+    // 5번째 단계 — 영상 제작 화면(status.html). index.html에는 대응 섹션이 없고,
+    // 클릭 시 status.html로 이동 (drafting 중이면 no-op).
+    { id: 'step-render',      label: '영상 제작', summaryFn: () => window._draftJobCompleted ? '완성' : '대기' },
 ];
 let STEPS = STEPS_AI_FULL;
 let currentStepIndex = 0;
@@ -724,18 +727,26 @@ async function createTtsPreviewSession(sentences, contentType, topic, style) {
         throw new Error('음성을 먼저 선택해주세요.');
     }
 
+    const isUserAssets = window._generationMode === 'user_assets';
+    const body = {
+        sentences,
+        voice_id: voiceId,
+        speed,
+        emotion,
+        content_type: contentType,
+        topic: topic || '',
+        style: style || 'realistic',
+    };
+    if (isUserAssets) {
+        // 카드 B: 백엔드 incremental TTS 분기 활성화
+        // line_ids로 line_id별 text_hash diff, existing_session_id로 wav 재사용.
+        body.line_ids = (window._userLineIds || []).map(id => id || null);
+        body.existing_session_id = window._ttsSessionId || null;
+    }
     const resp = await authFetch('/api/tts/preview-build', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            sentences,
-            voice_id: voiceId,
-            speed,
-            emotion,
-            content_type: contentType,
-            topic: topic || '',
-            style: style || 'realistic',
-        }),
+        body: JSON.stringify(body),
     });
     if (!resp.ok) {
         const err = await resp.json();
@@ -759,7 +770,9 @@ async function confirmTtsSettings() {
             await flushActiveUserLineEdit();
         }
 
-        if (window._ttsSessionId) {
+        // 카드 B: _ttsSessionId가 있어도 incremental 체크를 위해 preview-build를 항상 호출.
+        // 변경 없으면 backend가 regenerated_indices=[]로 즉시 응답(Typecast 0회).
+        if (window._ttsSessionId && !isUserAssets) {
             advanceToStepById('step-bgm');
             return;
         }
@@ -1092,6 +1105,9 @@ function goToStep(stepIndex) {
         console.warn(`goToStep: 범위 밖 인덱스 ${stepIndex} (유효: 0~${STEPS.length - 1})`);
         return;
     }
+    // step-render는 index.html에 섹션이 없는 가상 step (status.html로 이동만 처리).
+    // clickTimelineStep에서 처리하고 여기 직접 호출은 무시.
+    if (STEPS[stepIndex].id === 'step-render') return;
     currentStepIndex = stepIndex;
     const stepId = STEPS[stepIndex].id;
     const isUserLinesStep = stepId === 'step-user-lines';
@@ -1157,6 +1173,16 @@ function advanceToStepById(id) {
 }
 
 function clickTimelineStep(stepIndex) {
+    const step = STEPS[stepIndex];
+    // 5단계 '영상 제작' 클릭 — 완료된 카드 B job이 있으면 status.html로 이동.
+    // 아직 생성 전이거나 카드 A면 no-op (사용자에게 살짝 비활성 표시).
+    if (step && step.id === 'step-render') {
+        const jobId = window._draftJobId;
+        if (jobId && window._draftJobCompleted) {
+            window.location.href = `/static/status.html?job=${jobId}&phase=render`;
+        }
+        return;
+    }
     goToStep(stepIndex);
 }
 
@@ -2069,7 +2095,11 @@ function handleUserLineInput(i, el) {
     if (isUserLineLockedForTextEdit(i)) return;
     if (!window._userLineDirty) window._userLineDirty = new Set();
     window._userLineDirty.add(i);
-    invalidateTtsSession();
+    // 카드 B는 백엔드가 line_id별 text_hash diff로 변경 줄만 재합성하므로
+    // 프론트에서 _ttsSessionId를 무효화하지 않는다(incremental 신호 보존).
+    if (window._generationMode !== 'user_assets') {
+        invalidateTtsSession();
+    }
     const card = el.closest('.user-line-item');
     if (card) card.classList.toggle('is-empty', !(el.innerText || '').trim());
 }
@@ -2117,7 +2147,10 @@ async function saveUserLineEdit(i, el, opts) {
             if (!resp.ok) throw new Error('edit-line sync 실패');
             window._splitLines[i] = next;           // 성공 시 서버 기준 갱신
             window._userLineDirty.delete(i);
-            invalidateTtsSession();
+            // 카드 B는 incremental 분기 보존 — 백엔드가 변경 줄만 재합성한다.
+            if (window._generationMode !== 'user_assets') {
+                invalidateTtsSession();
+            }
         })();
         window._userLineSyncInFlight.set(i, p);
         try {
@@ -2249,7 +2282,10 @@ async function mergeLineWithPrevious(i, el) {
         }
         const data = await resp.json();
         syncUserLineStateFromResponse(data.lines, data.sources);
-        invalidateTtsSession();
+        // 카드 B는 line_id 기반 incremental diff를 위해 _ttsSessionId 보존.
+        if (window._generationMode !== 'user_assets') {
+            invalidateTtsSession();
+        }
         window._userLineDirty.clear();           // 서버 응답이 진실 — dirty 다 비움
         window._splitGen += 1;
         window._activeUserLineIndex = normalizeUserLinePreviewIndex(i - 1);
@@ -2427,7 +2463,10 @@ async function splitUserLineAt(i, el) {
         const data = await resp.json();
         // 서버 진실로 클라이언트 상태 전면 교체
         syncUserLineStateFromResponse(data.lines, data.sources);
-        invalidateTtsSession();
+        // 카드 B는 line_id 기반 incremental diff를 위해 _ttsSessionId 보존.
+        if (window._generationMode !== 'user_assets') {
+            invalidateTtsSession();
+        }
         window._userLineDirty.clear();
         window._splitGen += 1;  // 진행 중 폴링 무효화
         window._activeUserLineIndex = normalizeUserLinePreviewIndex(i + 1);
@@ -2788,11 +2827,105 @@ async function proceedToTtsFromUserLines() {
     }
     // 카드 A의 validateBeforeCreate 통과를 위해 narration 흐름 채움
     window._approvedNarrationLines = lines.slice();
-    invalidateTtsSession();
+    // 카드 B는 line_id 기반 incremental TTS를 위해 _ttsSessionId 보존.
+    // (이 함수는 카드 B 전용이라 가드가 사실상 무조건 true지만 다른 모드 가능성 대비 일관성 유지.)
+    if (window._generationMode !== 'user_assets') {
+        invalidateTtsSession();
+    }
     // 제목은 step-user-script에서 사용자가 입력한 값을 그대로 보존한다.
     // 예전엔 여기서 titleLine1/2/selectedTitle을 비웠는데, 그러면 사용자가 입력한
     // 제목이 confirm 시점에 빈 값으로 전송돼 영상에 제목이 안 박힌다.
     advanceToStep(2);  // STEPS_USER_ASSETS의 2번 = step-tts
+}
+
+// ──────────────────────────────────
+// 카드 B: 완료된 영상에서 되돌아가 편집 모드 복원
+// ──────────────────────────────────
+async function restoreFromJob(jobId) {
+    showLoading('이전 작업을 불러오는 중...');
+    try {
+        // reopen은 status=completed → preview_ready 전환 + 자산 R2 복구를 한 번에 처리.
+        // 이미 preview_ready면 멱등으로 동일 응답.
+        const resp = await authFetch('/api/jobs/' + jobId + '/reopen', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+        });
+        if (!resp.ok) {
+            const err = await resp.json().catch(() => ({}));
+            throw new Error(err.detail || '이전 작업을 불러올 수 없습니다');
+        }
+        const state = await resp.json();
+
+        // 카드 B 모드로 전환 + STEPS / 타임라인 렌더
+        selectGenerationMode('user_assets');
+
+        // 전역 상태 복원 — splitUserScript와 동일한 필드 셋
+        window._draftJobId = state.job_id;
+        window._draftJobCompleted = state.video_url ? true : false;
+        window._userScript = (state.lines || []).map(l => l.text || '').join(' ');
+        window._splitLines = (state.lines || []).map(l => l.text || '');
+        window._userLineIds = (state.lines || []).map(l => l.line_id || null);
+        window._userLineStatuses = (state.lines || []).map(l => l.status || 'ready');
+        window._userLineSources = (state.line_sources && state.line_sources.length)
+            ? state.line_sources.slice()
+            : (state.lines || []).map(() => 'ai');
+        window._userLineProgress = (state.lines || []).map(() => null);
+        window._userLineAssetVersions = (state.lines || []).map(l => normalizeUserLineAssetVersion(l));
+        window._batchUserLineQueue = null;
+        window._activeUserLineIndex = 0;
+        window._approvedNarrationLines = (state.lines || []).map(l => l.text || '');
+
+        // 제목 복원
+        titleLine1 = state.title_line1 || '';
+        titleLine2 = state.title_line2 || '';
+        selectedTitle = state.title || '';
+        const t1 = document.getElementById('user-title-line1');
+        const t2 = document.getElementById('user-title-line2');
+        if (t1) t1.value = titleLine1;
+        if (t2) t2.value = titleLine2;
+        const p1 = document.getElementById('user-preview-line1');
+        const p2 = document.getElementById('user-preview-line2');
+        if (p1) p1.textContent = titleLine1;
+        if (p2) p2.textContent = titleLine2;
+
+        // 음성 설정 복원 (DOM에 voice/엔진 select가 있다면)
+        const engineSel = document.getElementById('tts-engine');
+        if (engineSel && state.tts_engine) engineSel.value = state.tts_engine;
+        const speedSel = document.getElementById('tts-speed');
+        if (speedSel && state.tts_speed != null) speedSel.value = String(state.tts_speed);
+        // voice/emotion은 옵션이 비동기 로딩되므로 step-tts 진입 시 별도 재선택 필요할 수 있음
+        window._restoredVoiceId = state.voice_id || null;
+        window._restoredEmotion = state.emotion || null;
+        window._ttsSessionId = state.tts_session_id || null;
+
+        // BGM 복원
+        if (state.bgm_filename) {
+            selectedBgm = state.bgm_filename;
+        }
+        const bgmVolSlider = document.getElementById('bgm-volume');
+        if (bgmVolSlider && state.bgm_volume != null) {
+            bgmVolSlider.value = String(Math.round(state.bgm_volume * 100));
+        }
+        const bgmStartSec = document.getElementById('bgm-start-sec');
+        if (bgmStartSec && state.bgm_start_sec != null) {
+            bgmStartSec.value = String(state.bgm_start_sec);
+        }
+
+        // 대본 textarea 복원
+        const scriptTa = document.getElementById('user-script');
+        if (scriptTa) scriptTa.value = window._userScript;
+        updateUserScriptCount();
+        updateSplitScriptButtonState();
+
+        // 첫 step (제목·대본)으로
+        maxReachedStep = STEPS_USER_ASSETS.length - 1;
+        goToStep(0);
+
+        hideLoading();
+    } catch (e) {
+        hideLoading();
+        showFriendlyError(e.message || '복원에 실패했습니다');
+    }
 }
 
 // ──────────────────────────────────
@@ -2801,4 +2934,16 @@ async function proceedToTtsFromUserLines() {
 loadBgmList();
 loadUserProducts();
 toggleCategoryFields();  // 카테고리 + 영상 목적 UI 초기 상태 세팅
+
+// ?job_id=...&restore=1 진입 — 카드 B 완료 영상에서 편집 화면으로 돌아온 흐름
+(function checkRestoreEntry() {
+    const sp = new URLSearchParams(window.location.search);
+    const restoreJob = sp.get('job_id');
+    const restoreFlag = sp.get('restore');
+    if (restoreJob && restoreFlag === '1' && /^[a-f0-9]{12}$/.test(restoreJob)) {
+        // URL 정리 (새로고침해도 복원 루프에 빠지지 않게)
+        try { history.replaceState({}, '', '/'); } catch (e) {}
+        restoreFromJob(restoreJob);
+    }
+})();
 // 모드 선택 화면이 진입 화면. STEPS 타임라인은 모드 선택 후 렌더링된다.
