@@ -2841,7 +2841,7 @@ async function proceedToTtsFromUserLines() {
 // ──────────────────────────────────
 // 카드 B: 완료된 영상에서 되돌아가 편집 모드 복원
 // ──────────────────────────────────
-async function restoreFromJob(jobId) {
+async function restoreFromJob(jobId, targetStepIndex = 0) {
     showLoading('이전 작업을 불러오는 중...');
     try {
         // reopen은 status=completed → preview_ready 전환 + 자산 R2 복구를 한 번에 처리.
@@ -2917,9 +2917,13 @@ async function restoreFromJob(jobId) {
         updateUserScriptCount();
         updateSplitScriptButtonState();
 
-        // 첫 step (제목·대본)으로
+        // 사용자가 status.html 타임라인에서 클릭한 단계로 진입.
+        // 비정상 값은 0(제목·대본)으로 폴백 — checkRestoreEntry에서 1차 검증함.
         maxReachedStep = STEPS_USER_ASSETS.length - 1;
-        goToStep(0);
+        const safeStep = (Number.isInteger(targetStepIndex) && targetStepIndex >= 0 && targetStepIndex < STEPS_USER_ASSETS.length - 1)
+            ? targetStepIndex
+            : 0;
+        goToStep(safeStep);
 
         hideLoading();
     } catch (e) {
@@ -2935,15 +2939,21 @@ loadBgmList();
 loadUserProducts();
 toggleCategoryFields();  // 카테고리 + 영상 목적 UI 초기 상태 세팅
 
-// ?job_id=...&restore=1 진입 — 카드 B 완료 영상에서 편집 화면으로 돌아온 흐름
+// ?job_id=...&restore=1&step=N 진입 — 카드 B 완료 영상에서 편집 화면으로 돌아온 흐름.
+// step 파라미터는 status.html 타임라인에서 사용자가 누른 단계 인덱스(0~3).
 (function checkRestoreEntry() {
     const sp = new URLSearchParams(window.location.search);
     const restoreJob = sp.get('job_id');
     const restoreFlag = sp.get('restore');
     if (restoreJob && restoreFlag === '1' && /^[a-f0-9]{12}$/.test(restoreJob)) {
+        // step 파싱은 replaceState 전에 끝내야 한다 (URL을 정리하면 파라미터가 사라짐).
+        // 0~3만 허용 — 4(영상 제작)는 reopen 대상이 아니고, 비정상 값은 0으로 폴백.
+        const stepRaw = sp.get('step');
+        const stepNum = Number.parseInt(stepRaw, 10);
+        const parsedStep = (Number.isInteger(stepNum) && stepNum >= 0 && stepNum <= 3) ? stepNum : 0;
         // URL 정리 (새로고침해도 복원 루프에 빠지지 않게)
         try { history.replaceState({}, '', '/'); } catch (e) {}
-        restoreFromJob(restoreJob);
+        restoreFromJob(restoreJob, parsedStep);
     }
 })();
 // 모드 선택 화면이 진입 화면. STEPS 타임라인은 모드 선택 후 렌더링된다.
