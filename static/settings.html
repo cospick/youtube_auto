@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>설정 - Shorts Pick</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=5">
+    <link rel="stylesheet" href="/static/css/style.css?v=6">
 </head>
 <body class="has-navbar">
     <script>if(localStorage.getItem('theme')==='dark'||!localStorage.getItem('theme'))document.body.classList.add('dark');</script>
@@ -17,6 +17,7 @@
     </nav>
 
     <div class="container" style="padding-top: 20px; max-width: 640px;">
+        <a href="/" class="page-back" onclick="goBackOrHome(event)">← 뒤로가기</a>
         <h2 class="page-title">API 키 설정</h2>
         <p style="color: var(--text-dim); font-size: 15px; margin-bottom: 20px;">각 서비스에서 발급받은 API 키를 입력하세요</p>
 

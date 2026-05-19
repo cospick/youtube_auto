@@ -101,6 +101,22 @@ async function checkAuth() {
 }
 
 /**
+ * 뒤로가기 — 같은 origin에서 진입했으면 history.back, 외부/북마크/새 탭이면 href="/" 기본 동작.
+ */
+function goBackOrHome(event) {
+    try {
+        if (document.referrer) {
+            const ref = new URL(document.referrer);
+            if (ref.origin === window.location.origin) {
+                event.preventDefault();
+                history.back();
+            }
+        }
+    } catch (e) {
+    }
+}
+
+/**
  * 네비바 우측 메뉴 렌더링
  */
 function updateUserUI(user) {

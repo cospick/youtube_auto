@@ -191,6 +191,32 @@ header h1 {
     margin-bottom: 16px;
 }
 
+.page-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 15px;
+    margin-bottom: 20px;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.page-back:hover,
+.page-back:focus-visible {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.page-back:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
 /* 사용자 정보 & 로그아웃 */
 .user-info {
     display: inline-flex;
