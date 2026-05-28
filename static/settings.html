@@ -4,19 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>설정 - Shorts Pick</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=6">
+    <link rel="stylesheet" href="/static/css/style.css?v=19">
+    <script src="/static/js/icons.js?v=1" defer></script>
 </head>
 <body class="has-navbar">
     <script>if(localStorage.getItem('theme')==='dark'||!localStorage.getItem('theme'))document.body.classList.add('dark');</script>
     <nav class="navbar">
         <a href="/" class="navbar-logo">
-            <span class="navbar-logo-emoji">🎬</span>
+            <i data-lucide="clapperboard" class="navbar-logo-icon"></i>
             <span class="navbar-logo-text">Shorts Pick</span>
         </a>
         <div id="navbar-right" class="navbar-right"></div>
     </nav>
 
-    <div class="container" style="padding-top: 20px; max-width: 640px;">
+    <div class="container" style="padding-top: 56px; padding-bottom: 56px; max-width: 640px;">
         <a href="/" class="page-back" onclick="goBackOrHome(event)">← 뒤로가기</a>
         <h2 class="page-title">API 키 설정</h2>
         <p style="color: var(--text-dim); font-size: 15px; margin-bottom: 20px;">각 서비스에서 발급받은 API 키를 입력하세요</p>
@@ -42,7 +43,7 @@
                         <div class="key-links-row">
                             <a href="https://aistudio.google.com/apikey" target="_blank" class="key-link">Google AI Studio에서 발급</a>
                             <span class="key-link-divider">|</span>
-                            <button type="button" class="key-guide-toggle" onclick="document.getElementById('gemini-guide').classList.toggle('hidden')">📖 발급 방법</button>
+                            <button type="button" class="key-guide-toggle" onclick="document.getElementById('gemini-guide').classList.toggle('hidden')"><i data-lucide="book-open" class="icon-sm"></i> 발급 방법</button>
                         </div>
                         <div id="gemini-guide" class="key-guide hidden">
                             <ol>
@@ -51,7 +52,7 @@
                                 <li>"API 키 만들기" 버튼 클릭</li>
                                 <li>생성된 키를 복사하여 위 입력란에 붙여넣기</li>
                             </ol>
-                            <p class="key-guide-tip">💡 무료로 사용 가능합니다 (일일 사용량 제한 있음)</p>
+                            <p class="key-guide-tip"><i data-lucide="lightbulb" class="icon-sm icon-primary"></i>무료로 사용 가능합니다 (일일 사용량 제한 있음)</p>
                         </div>
                     </div>
 
@@ -70,7 +71,7 @@
                         <div class="key-links-row">
                             <a href="https://typecast.ai/developers/api" target="_blank" class="key-link">Typecast에서 발급</a>
                             <span class="key-link-divider">|</span>
-                            <button type="button" class="key-guide-toggle" onclick="document.getElementById('typecast-guide').classList.toggle('hidden')">📖 발급 방법</button>
+                            <button type="button" class="key-guide-toggle" onclick="document.getElementById('typecast-guide').classList.toggle('hidden')"><i data-lucide="book-open" class="icon-sm"></i> 발급 방법</button>
                         </div>
                         <div id="typecast-guide" class="key-guide hidden">
                             <ol>
@@ -79,7 +80,7 @@
                                 <li>상단 API 키 클릭</li>
                                 <li>API키를 복사하여 위 입력란에 붙여넣기</li>
                             </ol>
-                            <p class="key-guide-tip">💡 무료 플랜: 월 30,000 크레딧 제공</p>
+                            <p class="key-guide-tip"><i data-lucide="lightbulb" class="icon-sm icon-primary"></i>무료 플랜: 월 30,000 크레딧 제공</p>
                         </div>
                     </div>
 
@@ -98,10 +99,10 @@
                         <div class="key-links-row">
                             <a href="https://fal.ai/dashboard/keys" target="_blank" class="key-link">FAL에서 발급</a>
                             <span class="key-link-divider">|</span>
-                            <button type="button" class="key-guide-toggle" onclick="document.getElementById('fal-guide').classList.toggle('hidden')">📖 발급 방법</button>
+                            <button type="button" class="key-guide-toggle" onclick="document.getElementById('fal-guide').classList.toggle('hidden')"><i data-lucide="book-open" class="icon-sm"></i> 발급 방법</button>
                         </div>
                         <div id="fal-guide" class="key-guide hidden">
-                            <p class="key-guide-heading">🔑 API 키 발급 방법</p>
+                            <p class="key-guide-heading"><i data-lucide="key-round" class="icon-sm icon-primary"></i> API 키 발급 방법</p>
                             <ol>
                                 <li><a href="https://fal.ai/dashboard" target="_blank">https://fal.ai/dashboard</a> 접속 후 Google 아이디로 가입</li>
                                 <li>상단 메뉴 <strong>Settings</strong> 클릭 → <strong>API Keys</strong> 클릭</li>
@@ -109,7 +110,7 @@
                                 <li>발급된 API 키를 복사하여 메모장 등 안전한 곳에 저장</li>
                                 <li>저장한 키를 위 입력란에 붙여넣기</li>
                             </ol>
-                            <p class="key-guide-warn">⚠️ API 키는 발급 직후 <strong>한 번만 표시</strong>됩니다. 이때 복사해서 안전한 곳에 저장해두지 않으면 다시 확인할 수 없어 <strong>재발급</strong>을 받아야 합니다.</p>
+                            <p class="key-guide-warn"><i data-lucide="triangle-alert" class="icon-sm icon-warn"></i>API 키는 발급 직후 <strong>한 번만 표시</strong>됩니다. 이때 복사해서 안전한 곳에 저장해두지 않으면 다시 확인할 수 없어 <strong>재발급</strong>을 받아야 합니다.</p>
 
                             <p class="key-guide-heading">💳 카드 등록 / 결제 방법</p>
                             <ol>
@@ -118,7 +119,7 @@
                                 <li>충전할 금액 선택 후 신용카드 정보 입력 → 결제</li>
                                 <li>충전된 크레딧은 구매일로부터 <strong>365일</strong> 내 사용 가능</li>
                             </ol>
-                            <p class="key-guide-tip">💡 가입 시 카드 등록 없이 시작 가능하며, 유료 모델 사용 시점에 충전하면 됩니다 (종량제).</p>
+                            <p class="key-guide-tip"><i data-lucide="lightbulb" class="icon-sm icon-primary"></i>가입 시 카드 등록 없이 시작 가능하며, 유료 모델 사용 시점에 충전하면 됩니다 (종량제).</p>
                         </div>
                     </div>
 
@@ -150,7 +151,7 @@
         }
         .btn-toggle-eye:hover { border-color: var(--primary); color: var(--text); }
         .key-badge {
-            font-size: 12px; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-weight: normal;
+            font-size: 14px; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-weight: normal;
         }
         .key-badge.required { background: rgba(255,71,87,0.15); color: var(--error); }
         .key-badge.optional { background: rgba(136,136,136,0.15); color: var(--text-dim); }
@@ -165,6 +166,10 @@
         .key-guide-toggle {
             background: none; border: none; color: var(--primary);
             font-size: 14px; cursor: pointer; padding: 0;
+            display: inline-flex; align-items: center; gap: 4px;
+        }
+        .key-guide-heading {
+            display: flex; align-items: center; gap: 8px;
         }
         .key-guide-toggle:hover { text-decoration: underline; }
         .key-guide {
@@ -173,21 +178,27 @@
             font-size: 15px; color: var(--text-dim); line-height: 1.8;
         }
         .key-guide ol { padding-left: 18px; margin: 0; }
-        .key-guide-tip { font-size: 14px; margin-top: 8px; }
+        .key-guide-tip {
+            font-size: 14px; margin-top: 8px;
+            display: flex; align-items: flex-start; gap: 8px;
+        }
+        .key-guide-tip [data-lucide] { margin-top: 2px; }
         .key-guide-heading {
             font-size: 14px; font-weight: 600; color: var(--text);
             margin: 12px 0 6px 0;
         }
         .key-guide-heading:first-child { margin-top: 0; }
         .key-guide-warn {
-            font-size: 14px; margin-top: 10px; padding: 10px 12px;
-            background: rgba(255,71,87,0.08); border-left: 3px solid var(--error);
-            border-radius: 4px; color: var(--text); line-height: 1.6;
+            font-size: 14px; margin-top: 10px; padding: 12px 14px;
+            background: rgba(245, 158, 11, 0.08); border-left: 3px solid #f59e0b;
+            border-radius: 6px; color: var(--text); line-height: 1.6;
+            display: flex; align-items: flex-start; gap: 10px;
         }
+        .key-guide-warn [data-lucide] { margin-top: 2px; }
         .key-note { text-align: center; color: var(--text-dim); font-size: 14px; margin-top: 12px; }
     </style>
 
-    <script src="/static/js/auth.js"></script>
+    <script src="/static/js/auth.js?v=3"></script>
     <script src="/static/js/settings.js"></script>
 </body>
 </html>

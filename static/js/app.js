@@ -1739,7 +1739,8 @@ function updateBatchGenerateButton() {
     const queue = Array.isArray(window._batchUserLineQueue) ? window._batchUserLineQueue : [];
     if (queue.length === 0) {
         btn.disabled = false;
-        btn.textContent = '🪄 이미지 없는 줄 일괄 AI 생성';
+        btn.innerHTML = '<i data-lucide="wand-sparkles" class="icon-sm"></i> 이미지 없는 줄 일괄 AI 생성';
+        if (window.refreshIcons) window.refreshIcons();
         return;
     }
 
@@ -1748,12 +1749,14 @@ function updateBatchGenerateButton() {
     if (done >= queue.length) {
         window._batchUserLineQueue = null;
         btn.disabled = false;
-        btn.textContent = '🪄 이미지 없는 줄 일괄 AI 생성';
+        btn.innerHTML = '<i data-lucide="wand-sparkles" class="icon-sm"></i> 이미지 없는 줄 일괄 AI 생성';
+        if (window.refreshIcons) window.refreshIcons();
         return;
     }
 
     btn.disabled = true;
-    btn.textContent = `🪄 이미지 생성 중... ${done}/${queue.length}`;
+    btn.innerHTML = `<i data-lucide="loader-circle" class="icon-sm spinning"></i> 이미지 생성 중... ${done}/${queue.length}`;
+    if (window.refreshIcons) window.refreshIcons();
 }
 
 function setActiveUserLineIndex(index, opts) {
@@ -1869,16 +1872,16 @@ function getUserLineSlotState(i) {
 function getUserLineButtonsHtml(i, source, status, activeAction, working) {
     const disabled = working ? 'disabled' : '';
     const clipButton = (canGenerateUserLineClip(source, status) || activeAction === 'ai_clip')
-        ? `<button class="btn-secondary" onclick="userLineGenerateClip(${i})" ${disabled}>🎞 ${activeAction === 'ai_clip' ? getUserLineButtonLabel(activeAction) : 'AI 영상 변환'}</button>`
+        ? `<button class="btn-secondary" onclick="userLineGenerateClip(${i})" ${disabled}><i data-lucide="video" class="icon-sm"></i> ${activeAction === 'ai_clip' ? getUserLineButtonLabel(activeAction) : 'AI 영상 변환'}</button>`
         : '';
     const aiButtonText = activeAction === 'ai_image' ? getUserLineButtonLabel(activeAction) : 'AI 이미지 생성';
     const imageUploadText = activeAction === 'image_upload' ? getUserLineButtonLabel(activeAction) : '이미지 업로드';
     const clipUploadText = activeAction === 'clip_upload' ? getUserLineButtonLabel(activeAction) : '영상 업로드';
     return `
-        <button class="btn-secondary" onclick="userLineGenerateAI(${i})" ${disabled}>🪄 ${aiButtonText}</button>
+        <button class="btn-secondary" onclick="userLineGenerateAI(${i})" ${disabled}><i data-lucide="wand-sparkles" class="icon-sm"></i> ${aiButtonText}</button>
         ${clipButton}
-        <button class="btn-secondary" onclick="userLineUploadImage(${i})" ${disabled}>🖼 ${imageUploadText}</button>
-        <button class="btn-secondary" onclick="userLineUploadClip(${i})" ${disabled}>🎬 ${clipUploadText}</button>
+        <button class="btn-secondary" onclick="userLineUploadImage(${i})" ${disabled}><i data-lucide="image-plus" class="icon-sm"></i> ${imageUploadText}</button>
+        <button class="btn-secondary" onclick="userLineUploadClip(${i})" ${disabled}><i data-lucide="film" class="icon-sm"></i> ${clipUploadText}</button>
     `;
 }
 
@@ -1992,7 +1995,7 @@ function renderUserLines(opts) {
         }
         const statusBadge = status === 'pending' && !working ? '<div class="user-line-slot-status">대기</div>' : '';
         const clipButton = (canGenerateUserLineClip(source, status) || activeAction === 'ai_clip')
-            ? `<button class="btn-secondary" onclick="userLineGenerateClip(${i})" ${disabled}>🎞 ${activeAction === 'ai_clip' ? getUserLineButtonLabel(activeAction) : 'AI 영상 변환'}</button>`
+            ? `<button class="btn-secondary" onclick="userLineGenerateClip(${i})" ${disabled}><i data-lucide="video" class="icon-sm"></i> ${activeAction === 'ai_clip' ? getUserLineButtonLabel(activeAction) : 'AI 영상 변환'}</button>`
             : '';
         const cardClasses = ['user-line-item'];
         if (failed) cardClasses.push('failed');
@@ -2019,10 +2022,10 @@ function renderUserLines(opts) {
                      onkeydown="handleUserLineKey(event, ${i}, this)">${escapeHtml(text)}</div>
                 <div class="user-line-slot" data-slot-key="${escapeHtml(slotKey)}">${slot}${statusBadge}</div>
                 <div class="user-line-buttons">
-                    <button class="btn-secondary" onclick="userLineGenerateAI(${i})" ${disabled}>🪄 ${aiButtonText}</button>
+                    <button class="btn-secondary" onclick="userLineGenerateAI(${i})" ${disabled}><i data-lucide="wand-sparkles" class="icon-sm"></i> ${aiButtonText}</button>
                     ${clipButton}
-                    <button class="btn-secondary" onclick="userLineUploadImage(${i})" ${disabled}>🖼 ${imageUploadText}</button>
-                    <button class="btn-secondary" onclick="userLineUploadClip(${i})" ${disabled}>🎬 ${clipUploadText}</button>
+                    <button class="btn-secondary" onclick="userLineUploadImage(${i})" ${disabled}><i data-lucide="image-plus" class="icon-sm"></i> ${imageUploadText}</button>
+                    <button class="btn-secondary" onclick="userLineUploadClip(${i})" ${disabled}><i data-lucide="film" class="icon-sm"></i> ${clipUploadText}</button>
                 </div>
                 ${failed ? `<div class="fail-reason">실패: 다시 시도하거나 직접 업로드해주세요.</div>` : ''}
             </div>

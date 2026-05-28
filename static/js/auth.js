@@ -1,11 +1,45 @@
 /* 인증 유틸리티 - 모든 페이지에서 공유 */
 
 /* ── 테마 (다크/라이트) ── */
+const ICON_SUN = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="pointer-events:none"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>';
+const ICON_MOON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20" style="pointer-events:none"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
+
+function setThemeIcon() {
+    const btn = document.getElementById('theme-toggle-btn');
+    if (!btn) return;
+    btn.innerHTML = document.body.classList.contains('dark') ? ICON_MOON : ICON_SUN;
+}
+
 function toggleTheme() {
     const isDark = document.body.classList.toggle('dark');
     localStorage.setItem('theme', isDark ? 'dark' : 'light');
-    const btn = document.getElementById('theme-toggle-btn');
-    if (btn) btn.innerHTML = isDark ? '&#127769;' : '&#9728;&#65039;';
+    setThemeIcon();
+}
+
+// 이벤트 위임: 버튼이 다시 렌더링되어도 동작
+document.addEventListener('click', (e) => {
+    if (!e.target.closest) return;
+    const btn = e.target.closest('#theme-toggle-btn');
+    if (btn) {
+        e.preventDefault();
+        toggleTheme();
+        return;
+    }
+
+    // 로고/홈 클릭 시 진행 중 작업 보호
+    const homeAnchor = e.target.closest('.navbar-logo, a.navbar-link[href="/"]');
+    if (homeAnchor && hasUnsavedWork()) {
+        const ok = confirm('진행 중인 작업이 모두 사라집니다.\n정말 처음 화면으로 돌아갈까요?');
+        if (!ok) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+    }
+});
+
+function hasUnsavedWork() {
+    // index.html(app.js)에서만 _generationMode가 설정됨. 다른 페이지엔 영향 없음.
+    return !!window._generationMode;
 }
 
 let currentUser = null;
@@ -128,37 +162,37 @@ function updateUserUI(user) {
     const homeLink = document.createElement('a');
     homeLink.href = '/';
     homeLink.className = 'navbar-link';
-    homeLink.textContent = 'Home';
+    homeLink.innerHTML = '<i data-lucide="home"></i><span>Home</span>';
     nav.appendChild(homeLink);
 
     // 새소식
     const newsLink = document.createElement('a');
     newsLink.href = '/static/changelog.html';
     newsLink.className = 'navbar-link';
-    newsLink.textContent = '새소식';
+    newsLink.innerHTML = '<i data-lucide="bell"></i><span>새소식</span>';
     nav.appendChild(newsLink);
 
     // 작업이력
     const historyLink = document.createElement('a');
     historyLink.href = '/static/history.html';
     historyLink.className = 'navbar-link';
-    historyLink.textContent = '작업이력';
+    historyLink.innerHTML = '<i data-lucide="clock"></i><span>작업이력</span>';
     nav.appendChild(historyLink);
 
     // API 키 입력 (미설정 시)
     const ctaBtn = document.createElement('a');
     ctaBtn.href = '/static/settings.html';
     ctaBtn.className = 'navbar-cta';
-    ctaBtn.textContent = 'API 키를 입력해주세요';
+    ctaBtn.innerHTML = '<i data-lucide="key-round"></i><span>API 키 입력</span>';
     nav.appendChild(ctaBtn);
 
-    // 다크/라이트 모드 전환
+    // 다크/라이트 모드 전환 (클릭은 document 위임으로 처리)
     const themeBtn = document.createElement('button');
     themeBtn.className = 'navbar-icon-btn';
     themeBtn.id = 'theme-toggle-btn';
-    themeBtn.innerHTML = document.body.classList.contains('dark') ? '&#127769;' : '&#9728;&#65039;';
+    themeBtn.type = 'button';
+    themeBtn.innerHTML = document.body.classList.contains('dark') ? ICON_MOON : ICON_SUN;
     themeBtn.title = '테마 전환';
-    themeBtn.onclick = toggleTheme;
     nav.appendChild(themeBtn);
 
     // 이메일
@@ -171,9 +205,8 @@ function updateUserUI(user) {
     if (user.role === 'admin') {
         const adminLink = document.createElement('a');
         adminLink.href = '/static/admin.html';
-        adminLink.className = 'navbar-link';
-        adminLink.style.color = 'var(--primary)';
-        adminLink.textContent = '관리';
+        adminLink.className = 'navbar-link navbar-link-admin';
+        adminLink.innerHTML = '<i data-lucide="shield-check"></i><span>관리</span>';
         nav.appendChild(adminLink);
     }
 
@@ -181,9 +214,11 @@ function updateUserUI(user) {
     const logoutBtn = document.createElement('button');
     logoutBtn.className = 'navbar-icon-btn';
     logoutBtn.title = '로그아웃';
-    logoutBtn.innerHTML = '&#10132;';
+    logoutBtn.innerHTML = '<i data-lucide="log-out"></i>';
     logoutBtn.onclick = logout;
     nav.appendChild(logoutBtn);
+
+    if (window.refreshIcons) window.refreshIcons();
 }
 
 /**
