@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>승인 대기 - Shorts Pick</title>
-    <link rel="stylesheet" href="/static/css/style.css?v=4">
-    <link rel="stylesheet" href="/static/css/login.css?v=7">
+    <link rel="stylesheet" href="/static/css/style.css?v=15">
+    <link rel="stylesheet" href="/static/css/login.css?v=10">
+    <script src="/static/js/icons.js?v=1" defer></script>
 </head>
 <body>
     <script>if(localStorage.getItem('theme')==='dark'||!localStorage.getItem('theme'))document.body.classList.add('dark');</script>
@@ -14,11 +15,11 @@
 
             <div class="auth-panel login-card">
                 <div class="login-logo">
-                    <span class="login-logo-emoji">🎬</span>
+                    <i data-lucide="clapperboard" class="login-logo-icon"></i>
                     <span class="login-logo-text">Shorts Pick</span>
                 </div>
 
-                <div style="font-size: 48px; margin-bottom: 16px;">&#128336;</div>
+                <div style="display:flex; justify-content:center; margin-bottom: 20px;"><i data-lucide="clock" style="width:56px; height:56px; color: var(--primary);"></i></div>
                 <h3 class="login-logo-text" style="margin-bottom: 12px; font-size: 18px;">승인 대기 중</h3>
                 <p class="login-subtitle" style="margin-bottom: 4px;">
                     관리자가 승인할 때까지 기다려주세요.
