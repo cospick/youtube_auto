@@ -22,23 +22,23 @@
     --shadow-md: 0 2px 8px rgba(15, 23, 42, 0.06), 0 4px 16px rgba(15, 23, 42, 0.08);
     --shadow-lg: 0 4px 16px rgba(15, 23, 42, 0.08), 0 12px 32px rgba(15, 23, 42, 0.12);
 
-    /* 타이포 토큰 */
-    --text-xs: 14px;
-    --text-sm: 15px;
-    --text-base: 17px;
-    --text-lg: 20px;
-    --text-xl: 24px;
-    --text-2xl: 32px;
-    --text-3xl: 40px;
+    /* 타이포 토큰 (100% 줌 기준으로 ~10% 축소) */
+    --text-xs: 12px;
+    --text-sm: 13px;
+    --text-base: 15px;
+    --text-lg: 18px;
+    --text-xl: 22px;
+    --text-2xl: 28px;
+    --text-3xl: 36px;
 
-    /* 간격 */
+    /* 간격 (~10% 축소) */
     --space-1: 4px;
     --space-2: 8px;
-    --space-3: 12px;
-    --space-4: 16px;
-    --space-6: 24px;
-    --space-8: 32px;
-    --space-12: 48px;
+    --space-3: 10px;
+    --space-4: 14px;
+    --space-6: 22px;
+    --space-8: 28px;
+    --space-12: 44px;
 
     /* radius */
     --radius-sm: 8px;
@@ -145,7 +145,7 @@ body:not(.has-navbar) {
    - step-mode-select가 보이고 step-input이 hidden인 상태로 한정
    - 다른 스텝으로 진행하면 자동으로 일반 흐름으로 복귀 */
 body.has-navbar:has(#step-mode-select:not(.hidden)):has(#step-input.hidden) .workflow-shell {
-    min-height: calc(100vh - 76px);
+    min-height: calc(100vh - 68px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -163,8 +163,8 @@ body.has-navbar:has(#step-mode-select:not(.hidden)):has(#step-input.hidden) {
 
 /* 모드 선택 카드 단독 진입 시 — 좌우 넓게, 위아래는 절제 (폰트는 원래 그대로) */
 body:has(#step-input.hidden) #step-mode-select {
-    padding: 56px 128px 48px;
-    max-width: 1040px;
+    padding: 48px 112px 40px;
+    max-width: 940px;
     margin-left: auto;
     margin-right: auto;
     width: 100%;
@@ -197,7 +197,7 @@ body:has(#step-input.hidden) #step-mode-select .mode-card-grid {
 
 /* 모드 카드 — 배경 차별화 + 더 또렷한 아이콘 */
 body:has(#step-input.hidden) #step-mode-select .mode-card {
-    padding: 56px 40px;
+    padding: 48px 36px;
     background: linear-gradient(180deg, rgba(99, 102, 241, 0.04), transparent 60%), var(--surface);
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 20px;
@@ -232,18 +232,18 @@ body:has(#step-input.hidden) #step-mode-select .mode-card:hover::after {
 
 /* 아이콘 박스 — 더 또렷한 그라데이션 + 글로우 */
 body:has(#step-input.hidden) #step-mode-select .mode-card-icon-wrap {
-    width: 80px;
-    height: 80px;
-    margin-bottom: 24px;
-    border-radius: 20px;
+    width: 72px;
+    height: 72px;
+    margin-bottom: 22px;
+    border-radius: 18px;
     background: linear-gradient(135deg, var(--primary), var(--accent));
     color: var(--primary-fg);
     box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35);
 }
 
 body:has(#step-input.hidden) #step-mode-select .mode-card-icon {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     stroke-width: 2;
 }
 
@@ -315,7 +315,7 @@ header h1 {
     align-items: center;
     justify-content: space-between;
     padding: 0 max(32px, calc((100% - 1400px) / 2));
-    height: 76px;
+    height: 68px;
     border-bottom: 1px solid var(--border);
     background: rgba(250, 250, 250, 0.85);
     backdrop-filter: saturate(180%) blur(14px);
@@ -556,7 +556,7 @@ body.dark .navbar {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    padding: 40px 36px 32px;
+    padding: 36px 32px 28px;
     margin-bottom: var(--space-8);
     box-shadow: var(--shadow-sm);
     transition: box-shadow 0.2s ease, transform 0.2s ease;
@@ -2247,14 +2247,14 @@ input[type="range"] {
     transform: translateY(-4px);
 }
 .mode-card-emoji {
-    font-size: 56px;
+    font-size: 50px;
     line-height: 1;
     margin-bottom: var(--space-4);
 }
 
 .mode-card-icon-wrap {
-    width: 72px;
-    height: 72px;
+    width: 64px;
+    height: 64px;
     margin: 0 auto var(--space-5, 20px);
     display: flex;
     align-items: center;
