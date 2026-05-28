@@ -153,8 +153,15 @@ body.has-navbar:has(#step-mode-select:not(.hidden)):has(#step-input.hidden) .wor
     padding-bottom: 0;
 }
 
-/* 진입 화면 전용 배경 글로우 (페이지 전체에 깊이감) */
+/* 진입 화면 전용 배경 글로우 (페이지 전체에 깊이감, 라이트 모드는 더 은은하게) */
 body.has-navbar:has(#step-mode-select:not(.hidden)):has(#step-input.hidden) {
+    background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99, 102, 241, 0.06), transparent 60%),
+        radial-gradient(ellipse 60% 50% at 20% 100%, rgba(167, 139, 250, 0.04), transparent 60%),
+        var(--bg);
+}
+
+body.dark.has-navbar:has(#step-mode-select:not(.hidden)):has(#step-input.hidden) {
     background:
         radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99, 102, 241, 0.12), transparent 60%),
         radial-gradient(ellipse 60% 50% at 20% 100%, rgba(167, 139, 250, 0.08), transparent 60%),
@@ -168,9 +175,15 @@ body:has(#step-input.hidden) #step-mode-select {
     margin-left: auto;
     margin-right: auto;
     width: 100%;
-    background: rgba(28, 28, 38, 0.5);
+    background: rgba(255, 255, 255, 0.65);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(99, 102, 241, 0.08);
+    box-shadow: 0 24px 48px rgba(15, 23, 42, 0.10), 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+body.dark:has(#step-input.hidden) #step-mode-select {
+    background: rgba(28, 28, 38, 0.5);
     border: 1px solid rgba(255, 255, 255, 0.06);
     box-shadow: 0 32px 64px rgba(0, 0, 0, 0.35), 0 0 1px rgba(255, 255, 255, 0.05);
 }
