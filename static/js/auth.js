@@ -172,6 +172,13 @@ function updateUserUI(user) {
     newsLink.innerHTML = '<i data-lucide="bell"></i><span>새소식</span>';
     nav.appendChild(newsLink);
 
+    // 매뉴얼
+    const manualLink = document.createElement('a');
+    manualLink.href = '/static/manual.html';
+    manualLink.className = 'navbar-link';
+    manualLink.innerHTML = '<i data-lucide="book-open"></i><span>매뉴얼</span>';
+    nav.appendChild(manualLink);
+
     // 작업이력
     const historyLink = document.createElement('a');
     historyLink.href = '/static/history.html';
