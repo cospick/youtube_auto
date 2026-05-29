@@ -27,6 +27,14 @@ class User(Base):
     created_at = Column(DateTime, default=utc_now_naive)
 
 
+class PreApprovedEmail(Base):
+    __tablename__ = "pre_approved_emails"
+
+    email = Column(String, primary_key=True)
+    created_at = Column(DateTime, default=utc_now_naive)
+    created_by_user_id = Column(String, nullable=True)
+
+
 class UserBgm(Base):
     __tablename__ = "user_bgms"
 

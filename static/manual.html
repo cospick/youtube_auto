@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>매뉴얼 - Shorts Pick</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=29">
+    <script src="/static/js/icons.js?v=1" defer></script>
+</head>
+<body class="has-navbar">
+    <script>if(localStorage.getItem('theme')==='dark'||!localStorage.getItem('theme'))document.body.classList.add('dark');</script>
+    <nav class="navbar">
+        <a href="/" class="navbar-logo">
+            <i data-lucide="clapperboard" class="navbar-logo-icon"></i>
+            <span class="navbar-logo-text">Shorts Pick</span>
+        </a>
+        <div id="navbar-right" class="navbar-right"></div>
+    </nav>
+
+    <div class="container" style="padding-top: 56px; padding-bottom: 56px; max-width: 1100px;">
+        <a href="/" class="page-back" onclick="goBackOrHome(event)">← 뒤로가기</a>
+        <h2 class="manual-title">사용자 매뉴얼</h2>
+        <p class="manual-subtitle">처음 사용하시나요? 왼쪽 목록에서 항목을 선택해 단계별로 따라해 보세요.</p>
+
+        <div class="manual-layout">
+            <aside class="manual-sidebar" id="manual-sidebar">
+                <div class="manual-sidebar-group">
+                    <div class="manual-sidebar-group-title">시작 전</div>
+                    <button type="button" class="manual-sidebar-item" data-key="warnings">
+                        <span class="num">1</span><span>주의사항</span>
+                    </button>
+                    <button type="button" class="manual-sidebar-item" data-key="api-keys">
+                        <span class="num">2</span><span>API 키 등록하기</span>
+                    </button>
+                </div>
+
+                <div class="manual-sidebar-group">
+                    <div class="manual-sidebar-group-title">사용방법</div>
+                    <button type="button" class="manual-sidebar-item" data-key="signup">
+                        <span class="num">1</span><span>회원가입 &amp; 로그인</span>
+                    </button>
+                    <button type="button" class="manual-sidebar-item" data-key="card-a">
+                        <span class="num">2</span><span>카드 A: AI가 모두 생성</span>
+                    </button>
+                    <button type="button" class="manual-sidebar-item" data-key="card-b">
+                        <span class="num">3</span><span>카드 B: 내가 직접 제공</span>
+                    </button>
+                    <button type="button" class="manual-sidebar-item" data-key="status">
+                        <span class="num">4</span><span>작업 진행 상태 보기</span>
+                    </button>
+                    <button type="button" class="manual-sidebar-item" data-key="preview">
+                        <span class="num">5</span><span>미리보기 &amp; 영상 만들기</span>
+                    </button>
+                    <button type="button" class="manual-sidebar-item" data-key="download">
+                        <span class="num">6</span><span>완성본 다운로드</span>
+                    </button>
+                </div>
+            </aside>
+
+            <main class="manual-content" id="manual-content">
+                <section class="manual-section" data-key="warnings" hidden>
+                    <h3>주의사항</h3>
+                    <p class="manual-lead">영상 제작을 시작하기 전에 꼭 확인해야 할 내용입니다.</p>
+                    <div class="manual-placeholder">
+                        <i data-lucide="image"></i>
+                        <p>이 영역에 스크린샷과 설명이 들어갑니다.</p>
+                    </div>
+                </section>
+
+                <section class="manual-section" data-key="api-keys" hidden>
+                    <h3>API 키 등록하기</h3>
+                    <p class="manual-lead">영상 제작에는 세 가지 외부 서비스(Gemini · Typecast · FAL)의 API 키가 필요합니다. 아래 항목을 펼쳐서 발급과 입력 방법을 확인하세요.</p>
+
+                    <div class="manual-note">
+                        키가 하나라도 빠지면 해당 단계에서 작업이 멈춥니다. 서버 키로 자동 대체되지 않으니 세 가지 모두 등록해 주세요.
+                    </div>
+
+                    <details class="manual-accordion">
+                        <summary>
+                            <span class="manual-accordion-badge">1</span>
+                            <span>제미나이(Gemini) API 키 등록하기</span>
+                        </summary>
+                        <div class="manual-accordion-body">
+                            <h5>키 발급 방법</h5>
+                            <ol>
+                                <li>Google AI Studio (aistudio.google.com)에 접속해 Google 계정으로 로그인합니다.</li>
+                                <li>좌측 메뉴에서 "Get API key"를 누른 뒤 "Create API key"를 클릭합니다.</li>
+                                <li>생성된 키 문자열을 복사합니다.</li>
+                            </ol>
+                            <div class="manual-placeholder">
+                                <i data-lucide="image"></i>
+                                <p>AI Studio에서 키를 발급받는 스크린샷이 들어갑니다.</p>
+                            </div>
+
+                            <h5>사이트에 입력하는 방법</h5>
+                            <ol>
+                                <li>상단 우측 "API 키 입력" 버튼을 누릅니다.</li>
+                                <li>설정 페이지의 "Gemini API 키" 칸에 복사한 키를 붙여넣습니다.</li>
+                                <li>저장 버튼을 눌러 등록을 마칩니다.</li>
+                            </ol>
+                            <div class="manual-placeholder">
+                                <i data-lucide="image"></i>
+                                <p>설정 페이지의 Gemini 키 입력란 스크린샷이 들어갑니다.</p>
+                            </div>
+                        </div>
+                    </details>
+
+                    <details class="manual-accordion">
+                        <summary>
+                            <span class="manual-accordion-badge">2</span>
+                            <span>타입캐스트(Typecast) API 키 등록하기</span>
+                        </summary>
+                        <div class="manual-accordion-body">
+                            <h5>키 발급 방법</h5>
+                            <ol>
+                                <li>Typecast (typecast.ai)에 접속해 회원가입 및 로그인을 합니다.</li>
+                                <li>마이페이지의 "API" 섹션에서 키를 생성합니다.</li>
+                                <li>생성된 키를 복사합니다.</li>
+                            </ol>
+                            <div class="manual-placeholder">
+                                <i data-lucide="image"></i>
+                                <p>Typecast 키 발급 화면 스크린샷이 들어갑니다.</p>
+                            </div>
+
+                            <h5>사이트에 입력하는 방법</h5>
+                            <ol>
+                                <li>상단 우측 "API 키 입력" 버튼을 누릅니다.</li>
+                                <li>설정 페이지의 "Typecast API 키" 칸에 복사한 키를 붙여넣습니다.</li>
+                                <li>저장 버튼을 눌러 등록을 마칩니다.</li>
+                            </ol>
+                            <div class="manual-placeholder">
+                                <i data-lucide="image"></i>
+                                <p>설정 페이지의 Typecast 키 입력란 스크린샷이 들어갑니다.</p>
+                            </div>
+                        </div>
+                    </details>
+
+                    <details class="manual-accordion">
+                        <summary>
+                            <span class="manual-accordion-badge">3</span>
+                            <span>FAL API 키 등록하기</span>
+                        </summary>
+                        <div class="manual-accordion-body">
+                            <h5>키 발급 방법</h5>
+                            <ol>
+                                <li>FAL (fal.ai)에 접속해 회원가입 및 로그인을 합니다.</li>
+                                <li>대시보드의 "API Keys" 메뉴에서 새 키를 생성합니다.</li>
+                                <li>생성된 키를 복사합니다.</li>
+                            </ol>
+                            <div class="manual-placeholder">
+                                <i data-lucide="image"></i>
+                                <p>FAL 키 발급 화면 스크린샷이 들어갑니다.</p>
+                            </div>
+
+                            <h5>사이트에 입력하는 방법</h5>
+                            <ol>
+                                <li>상단 우측 "API 키 입력" 버튼을 누릅니다.</li>
+                                <li>설정 페이지의 "FAL API 키" 칸에 복사한 키를 붙여넣습니다.</li>
+                                <li>저장 버튼을 눌러 등록을 마칩니다.</li>
+                            </ol>
+                            <div class="manual-placeholder">
+                                <i data-lucide="image"></i>
+                                <p>설정 페이지의 FAL 키 입력란 스크린샷이 들어갑니다.</p>
+                            </div>
+                        </div>
+                    </details>
+                </section>
+
+                <section class="manual-section" data-key="signup" hidden>
+                    <h3>회원가입 &amp; 로그인</h3>
+                    <p class="manual-lead">Google 계정으로 로그인할 수 있습니다. 첫 가입 시 관리자 승인이 필요합니다.</p>
+                    <div class="manual-placeholder">
+                        <i data-lucide="image"></i>
+                        <p>로그인 화면과 승인 대기 화면이 들어갑니다.</p>
+                    </div>
+                </section>
+
+                <section class="manual-section" data-key="card-a" hidden>
+                    <h3>카드 A: AI가 모두 생성</h3>
+                    <p class="manual-lead">주제만 입력하면 제목·나레이션·이미지·영상까지 AI가 자동으로 만들어줍니다.</p>
+                    <div class="manual-placeholder">
+                        <i data-lucide="image"></i>
+                        <p>주제 입력 → 제목 선택 → 나레이션 → TTS → BGM → 제작 시작 단계별 화면이 들어갑니다.</p>
+                    </div>
+                </section>
+
+                <section class="manual-section" data-key="card-b" hidden>
+                    <h3>카드 B: 내가 직접 제공</h3>
+                    <p class="manual-lead">이미 가지고 있는 대본을 입력하고 줄마다 이미지·영상을 올리거나 AI에 맡길 수 있습니다.</p>
+                    <div class="manual-placeholder">
+                        <i data-lucide="image"></i>
+                        <p>제목·대본 입력 → 줄별 자산 편집 → TTS → BGM 단계별 화면이 들어갑니다.</p>
+                    </div>
+                </section>
+
+                <section class="manual-section" data-key="status" hidden>
+                    <h3>작업 진행 상태 보기</h3>
+                    <p class="manual-lead">영상 제작이 시작되면 진행 상태 페이지로 자동 이동합니다.</p>
+                    <div class="manual-placeholder">
+                        <i data-lucide="image"></i>
+                        <p>이미지 생성 → TTS → 영상 조립 단계의 진행 화면이 들어갑니다.</p>
+                    </div>
+                </section>
+
+                <section class="manual-section" data-key="preview" hidden>
+                    <h3>미리보기 &amp; 영상 만들기</h3>
+                    <p class="manual-lead">생성된 이미지를 확인하고 영상 모드를 선택해 본 제작을 시작합니다.</p>
+                    <div class="manual-placeholder">
+                        <i data-lucide="image"></i>
+                        <p>미리보기 화면과 영상 모드(켄번스/Hailuo 등) 선택 안내가 들어갑니다.</p>
+                    </div>
+                </section>
+
+                <section class="manual-section" data-key="download" hidden>
+                    <h3>완성본 다운로드</h3>
+                    <p class="manual-lead">제작이 완료되면 작업이력에서 영상을 다운로드할 수 있습니다.</p>
+                    <div class="manual-placeholder">
+                        <i data-lucide="image"></i>
+                        <p>작업이력 페이지와 다운로드 버튼 안내가 들어갑니다.</p>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+    <script src="/static/js/auth.js?v=4"></script>
+    <script>
+    authReady.then(() => initManual());
+
+    const DEFAULT_KEY = 'warnings';
+
+    function initManual() {
+        const sidebar = document.getElementById('manual-sidebar');
+        const sections = document.querySelectorAll('#manual-content .manual-section');
+
+        function show(key) {
+            let matched = false;
+            sections.forEach(s => {
+                const on = s.dataset.key === key;
+                s.hidden = !on;
+                if (on) matched = true;
+            });
+            if (!matched) {
+                // 알 수 없는 키면 첫 항목으로 폴백
+                sections.forEach(s => { s.hidden = s.dataset.key !== DEFAULT_KEY; });
+                key = DEFAULT_KEY;
+            }
+            sidebar.querySelectorAll('.manual-sidebar-item').forEach(b => {
+                const on = b.dataset.key === key;
+                b.classList.toggle('active', on);
+                if (on) b.setAttribute('aria-current', 'true');
+                else b.removeAttribute('aria-current');
+            });
+            const url = new URL(location.href);
+            if (url.searchParams.get('topic') !== key) {
+                url.searchParams.set('topic', key);
+                history.replaceState(null, '', url);
+            }
+            // 본문 영역 상단으로 살짝 스크롤 (모바일 UX)
+            const content = document.getElementById('manual-content');
+            if (window.innerWidth < 768 && content) {
+                content.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        sidebar.addEventListener('click', (e) => {
+            const btn = e.target.closest('.manual-sidebar-item');
+            if (!btn) return;
+            show(btn.dataset.key);
+        });
+
+        const initialKey = new URLSearchParams(location.search).get('topic') || DEFAULT_KEY;
+        show(initialKey);
+    }
+    </script>
+</body>
+</html>

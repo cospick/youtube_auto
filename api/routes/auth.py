@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, Depends, Response, Request
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from db.database import get_db
-from db.models import User
+from db.models import User, PreApprovedEmail
 from api.models import LoginRequest, ApiKeysUpdateRequest, ApiKeysResponse
 from api.deps import get_current_user, get_approved_user
 from core.security import (
@@ -167,15 +167,19 @@ async def google_callback(code: str, state: str = "", db: Session = Depends(get_
 
     user = db.query(User).filter(User.email == email).first()
     if not user:
+        email_lc = email.lower()
+        pre = db.query(PreApprovedEmail).filter(PreApprovedEmail.email == email_lc).first()
         user = User(
             id=uuid.uuid4().hex,
             email=email,
             nickname=user_info.get("name", email.split("@")[0]),
             provider="google",
             provider_id=user_info.get("sub"),
-            approved=False,
+            approved=bool(pre),
         )
         db.add(user)
+        if pre:
+            db.delete(pre)
         db.commit()
         db.refresh(user)
 
