@@ -1720,10 +1720,6 @@ input[type="range"] {
 
 /* ── 워크플로우 타임라인 ── */
 .timeline {
-    position: sticky;
-    top: 76px;
-    z-index: 100;
-    background: var(--bg);
     padding: 24px 0 20px;
     margin-bottom: 24px;
 }
