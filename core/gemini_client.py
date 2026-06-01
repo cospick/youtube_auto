@@ -1117,7 +1117,11 @@ async def generate_all_images(
     api_key: str = None,
     product_image=None,
 ) -> list[str]:
-    """대본의 모든 이미지를 병렬 생성. 반환: 이미지 경로 목록
+    """대본의 모든 이미지를 생성. 반환: 이미지 경로 목록
+
+    무료 티어 분당 한도(429) 보호를 위해 한꺼번에 보내지 않고,
+    동시 IMAGE_GEN_CONCURRENCY장 + 장 사이 IMAGE_GEN_INTERVAL_SEC초 간격으로
+    천천히 순차 전송한다. (settings에서 조정 가능)
 
     product_image: PIL.Image — 제공 시 마지막 라인(CTA)에만 참조 이미지로 전달.
     """
@@ -1132,9 +1136,16 @@ async def generate_all_images(
         )
 
     completed = 0
+    # 동시 생성 장수 제한 (무료 티어 분당 한도 보호)
+    sem = asyncio.Semaphore(max(1, settings.IMAGE_GEN_CONCURRENCY))
 
     async def _generate_and_track(i):
         nonlocal completed
+        # 장마다 출발을 IMAGE_GEN_INTERVAL_SEC초씩 늦춰, 분당 요청이 몰리지 않게 분산.
+        # (동시 1장이면 사실상 i번째 장은 i*간격 시점에 시작)
+        start_delay = i * settings.IMAGE_GEN_INTERVAL_SEC
+        if start_delay > 0:
+            await asyncio.sleep(start_delay)
         output_path = os.path.join(storage_dir, "images", f"img_{i:02d}.png")
 
         # CTA 라인이고 제품 이미지가 있으면 접두어 + 참조 이미지 전달
@@ -1145,15 +1156,16 @@ async def generate_all_images(
             prompt = PRODUCT_REFERENCE_PREFIX + prompt
             refs = [product_image]
 
-        result = await generate_image(
-            prompt=prompt,
-            style=style,
-            output_path=output_path,
-            progress_callback=progress_callback,
-            job_id=job_id,
-            api_key=api_key,
-            reference_images=refs,
-        )
+        async with sem:
+            result = await generate_image(
+                prompt=prompt,
+                style=style,
+                output_path=output_path,
+                progress_callback=progress_callback,
+                job_id=job_id,
+                api_key=api_key,
+                reference_images=refs,
+            )
         completed += 1
         if progress_callback:
             progress_callback(

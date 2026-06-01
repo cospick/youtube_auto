@@ -34,6 +34,12 @@ class Settings(BaseSettings):
     GEMINI_TEXT_MODEL: str = "gemini-3-flash-preview"
     GEMINI_IMAGE_MODEL: str = "gemini-3.1-flash-image-preview"
 
+    # 이미지 생성 속도 조절 (무료 티어 분당 한도 보호용)
+    # 동시 생성 장수와 장 사이 간격(초). 무료 티어는 분당 요청 수가 적어
+    # 한꺼번에 보내면 429(요청 횟수 초과)가 나므로 천천히 순차 전송한다.
+    IMAGE_GEN_CONCURRENCY: int = 1
+    IMAGE_GEN_INTERVAL_SEC: float = 12.0
+
     # JWT 인증
     JWT_SECRET: str = ""
     JWT_ALGORITHM: str = "HS256"
