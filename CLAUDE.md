@@ -3,7 +3,7 @@
 ## 실행 명령
 
 ```bash
-python main.py                                              # 로컬 서버 (http://localhost:8000)
+./run.sh                                                   # 로컬 서버 (http://localhost:8000) — venv 자동 선택(워크트리는 메인 .venv 사용)
 python create_admin.py admin@example.com 닉네임 비밀번호     # 관리자 계정 생성
 docker build -t ai-shorts . && docker run -p 8000:8000 --env-file .env ai-shorts  # Docker
 ```
