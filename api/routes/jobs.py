@@ -61,11 +61,16 @@ def _job_to_response(job: Job, user_map: dict | None = None) -> JobResponse:
     # 활성 task 체크는 N+1 회피 위해 생략 — 드물게 클릭 후 409 발생 시 사용자 재시도.
     # preview_ready 포함: reopen이 멱등이라 이미 편집 중인 job에 다시 진입하는 흐름도 허용.
     # (사용자가 편집 화면을 떠났다가 작업이력으로 돌아와 다시 들어가는 케이스)
+    #
+    # intermediates_purged 조건은 'completed' 작업에만 적용한다. 이 플래그는 카드 B 영상 완성
+    # 시점에야 worker가 False로 내려주고(그 전까진 컬럼 기본값 True), 다운로드/정리(finalize) 후
+    # 다시 True가 된다. 따라서 '아직 완성 전 초안(preview_ready)'은 기본값이 True여도 중간 산출물이
+    # 실제로 살아있는 정상 편집 대상이다. discard로 비운 경우는 files_expired가 따로 잡아낸다.
     can_reopen = (
         job.generation_mode == "user_assets"
         and job.status in ("completed", "preview_ready")
-        and not bool(job.intermediates_purged)
         and not files_expired
+        and (job.status == "preview_ready" or not bool(job.intermediates_purged))
     )
 
     return JobResponse(
@@ -277,6 +282,9 @@ async def create_draft_job(
         line_sources_json=json.dumps(["ai"] * n, ensure_ascii=False),
         status="preview_ready",
         current_step="자산 편집 대기 중",
+        # 초안은 줄별 자산을 지금부터 만들어 채우는 '편집 중' 상태 → 중간 산출물이 살아있음.
+        # 컬럼 기본값(True)을 그대로 두면 작업이력의 can_reopen 판정이 어긋나므로 명시적으로 False.
+        intermediates_purged=False,
     )
     db.add(job)
     db.commit()
@@ -667,9 +675,28 @@ async def reopen_job(
 
     # 이미 preview_ready 상태면 멱등 응답 (active task 없는 경우에 한해)
     if job.status == "preview_ready":
-        if _active_tasks_count(db, job_id) == 0:
-            return _build_draft_state(job)
-        raise HTTPException(status_code=409, detail="이미 편집 가능 상태이며 진행 중인 작업이 있습니다")
+        if _active_tasks_count(db, job_id) > 0:
+            raise HTTPException(status_code=409, detail="이미 편집 가능 상태이며 진행 중인 작업이 있습니다")
+        # 중단된 초안 재진입: 서버 재시작 등으로 로컬에서 사라진 자산을 R2에서 best-effort 복구.
+        # 완성본 경로와 달리 missing은 무시한다 — 아직 업로드/생성 전인 pending 줄이 정상적으로
+        # 존재할 수 있고, 여기서 차단하면 "이어서 편집"이 불가능해지기 때문. 실제 자산 누락은
+        # 이후 /confirm 단계의 줄별 검증(preview.py)에서 차단된다.
+        try:
+            draft_lines = json.loads(job.script_json or "[]")
+        except Exception:
+            draft_lines = []
+        try:
+            draft_sources = json.loads(job.line_sources_json or "[]")
+        except Exception:
+            draft_sources = []
+        if draft_lines:
+            ensure_line_ids(draft_lines)
+            job.script_json = json.dumps(draft_lines, ensure_ascii=False)
+            await _restore_local_assets_from_r2(job_id, draft_lines, draft_sources)
+            _restore_tts_session_dir(job.tts_session_id, job_id)
+            db.commit()
+            db.refresh(job)
+        return _build_draft_state(job)
 
     if job.status != "completed":
         raise HTTPException(status_code=409, detail=f"완료된 작업만 다시 편집할 수 있습니다 (상태: {job.status})")
