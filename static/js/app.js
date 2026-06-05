@@ -312,6 +312,26 @@ function onUserTitleLineEdited() {
     updateSplitScriptButtonState();
 }
 
+// 제목칸에서 포커스가 빠질 때(blur) 초안 제목을 즉시 DB에 저장한다.
+// 초안 생성 이후(또는 [편집 계속] 복원 이후) 제목을 고쳐도 보존되도록 하는 트리거.
+// 아직 초안이 없으면(최초 입력 단계) 저장은 splitUserScript의 draft 생성 시점에 이뤄진다.
+async function saveDraftTitle() {
+    if (!window._draftJobId) return;
+    try {
+        await authFetch(`/api/jobs/${window._draftJobId}/draft-meta`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title_line1: titleLine1,
+                title_line2: titleLine2,
+                title: selectedTitle,
+            }),
+        });
+    } catch (e) {
+        // 비치명적 — 저장 실패해도 편집 흐름은 계속 진행한다.
+    }
+}
+
 function updateUserTitlePreview() {
     const el1 = document.getElementById('user-preview-line1');
     const el2 = document.getElementById('user-preview-line2');
@@ -1561,7 +1581,12 @@ async function splitUserScript() {
         const draftResp = await authFetch('/api/jobs/draft', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ lines: data.lines }),
+            body: JSON.stringify({
+                lines: data.lines,
+                title_line1: titleLine1,
+                title_line2: titleLine2,
+                title: selectedTitle,
+            }),
         });
         if (!draftResp.ok) {
             const err = await draftResp.json();
