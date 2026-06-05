@@ -277,13 +277,15 @@
                                     <label>윗줄</label>
                                     <input type="text" id="user-title-line1" maxlength="16"
                                            placeholder="예: 얼굴 빨개지는"
-                                           oninput="onUserTitleLineEdited()">
+                                           oninput="onUserTitleLineEdited()"
+                                           onblur="saveDraftTitle()">
                                 </div>
                                 <div class="form-group">
                                     <label>아랫줄</label>
                                     <input type="text" id="user-title-line2" maxlength="16"
                                            placeholder="예: 의외의 진짜 이유"
-                                           oninput="onUserTitleLineEdited()">
+                                           oninput="onUserTitleLineEdited()"
+                                           onblur="saveDraftTitle()">
                                 </div>
                             </div>
                         </div>

@@ -171,11 +171,22 @@ class SplitScriptResponse(BaseModel):
 class DraftJobRequest(BaseModel):
     """카드 B용 draft Job 생성 요청 (쪼개진 대본 보유)."""
     lines: list[str] = Field(..., min_length=1, max_length=50)
+    # confirm 이전에도 제목을 DB에 보존해 [편집 계속] 복원 시 제목이 살아있게 한다.
+    title_line1: Optional[str] = Field(None, max_length=16)
+    title_line2: Optional[str] = Field(None, max_length=16)
+    title: Optional[str] = Field(None, max_length=40)
 
 
 class DraftJobResponse(BaseModel):
     job_id: str
     lines: list[ScriptLine] = Field(default_factory=list)
+
+
+class DraftMetaRequest(BaseModel):
+    """카드 B 초안 제목 등 메타데이터 경량 저장 (confirm 이전)."""
+    title_line1: Optional[str] = Field(None, max_length=16)
+    title_line2: Optional[str] = Field(None, max_length=16)
+    title: Optional[str] = Field(None, max_length=40)
 
 
 class SplitLineRequest(BaseModel):

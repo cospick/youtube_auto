@@ -3,7 +3,7 @@
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Path, Request
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
-from api.models import JobCreateRequest, JobResponse, JobStatus, DraftJobRequest, DraftJobResponse, ScriptLine
+from api.models import JobCreateRequest, JobResponse, JobStatus, DraftJobRequest, DraftJobResponse, DraftMetaRequest, ScriptLine
 from api.deps import get_approved_user, get_user_job, get_user_job_by_uid
 from db.database import get_db
 from db.models import Job, JobTask, User, UserProduct
@@ -276,7 +276,10 @@ async def create_draft_job(
         id=job_id,
         user_id=_user.id,
         topic="",
-        title="",
+        # 제목·대본이 같은 1단계라 이 시점에 제목이 이미 입력돼 있다. confirm 전에도 보존.
+        title=request.title or "",
+        title_line1=request.title_line1,
+        title_line2=request.title_line2,
         script_json=json.dumps(script_lines, ensure_ascii=False),
         generation_mode="user_assets",
         line_sources_json=json.dumps(["ai"] * n, ensure_ascii=False),
@@ -296,6 +299,32 @@ async def create_draft_job(
         os.makedirs(os.path.join(job_dir, sub), exist_ok=True)
 
     return DraftJobResponse(job_id=job.id, lines=[ScriptLine(**l) for l in script_lines])
+
+
+@router.post("/{job_id}/draft-meta")
+async def update_draft_meta(
+    request: DraftMetaRequest,
+    job_id: str = Path(..., pattern=r"^[a-f0-9]{12}$"),
+    db: Session = Depends(get_db),
+    _user: User = Depends(get_approved_user),
+):
+    """카드 B 초안의 제목을 confirm 이전에 즉시 저장 (편집 계속 복원 대비).
+
+    제목은 visual_plan에 영향이 없으므로 invalidate_visual_plan은 호출하지 않는다.
+    """
+    job = get_user_job(db, job_id, _user)
+    if job.generation_mode != "user_assets":
+        raise HTTPException(status_code=400, detail="이 작업은 카드 B 모드가 아닙니다")
+    if job.status != "preview_ready":
+        raise HTTPException(status_code=409, detail=f"카드 편집 단계가 아닙니다 (상태: {job.status})")
+    if request.title_line1 is not None:
+        job.title_line1 = request.title_line1
+    if request.title_line2 is not None:
+        job.title_line2 = request.title_line2
+    if request.title is not None:
+        job.title = request.title
+    db.commit()
+    return {"ok": True}
 
 
 @router.get("/", response_model=list[JobResponse])
