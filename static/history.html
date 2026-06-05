@@ -111,15 +111,21 @@
         if (job.files_expired) {
             return '<span class="text-dim" style="font-size:12px">파일이 삭제되었습니다 (30일 경과)</span>';
         }
-        if (job.video_url) {
-            const buttons = [`<a href="${escapeHtml(job.video_url)}" class="btn-small btn-primary" download>다운로드</a>`];
-            // 카드 B 완료 + 편집 가능한 경우만 "편집 계속" 노출 — 백엔드 can_reopen이 단일 진실원.
-            // === true 엄격 비교로 옛날 row의 누락 필드 / null 모두 false 폴백.
-            if (job.can_reopen === true) {
-                const safeId = encodeURIComponent(job.job_id);
-                buttons.push(`<a href="/static/index.html?job_id=${safeId}&restore=1" class="btn-small btn-secondary">편집 계속</a>`);
+        // 카드 B 편집 가능 작업은 완성 영상 유무와 무관하게 "편집 계속"으로 복원 흐름에 진입한다.
+        // can_reopen이 단일 진실원(백엔드): user_assets + (completed|preview_ready) + 미정리/미만료.
+        // === true 엄격 비교로 옛날 row의 누락 필드 / null 모두 false 폴백.
+        // 완성 영상이 있으면 다운로드도 함께, 없으면(중단된 초안) 편집 계속만 노출 → 설정 단계로 복귀.
+        if (job.can_reopen === true) {
+            const safeId = encodeURIComponent(job.job_id);
+            const buttons = [];
+            if (job.video_url) {
+                buttons.push(`<a href="${escapeHtml(job.video_url)}" class="btn-small btn-primary" download>다운로드</a>`);
             }
+            buttons.push(`<a href="/static/index.html?job_id=${safeId}&restore=1" class="btn-small btn-secondary">편집 계속</a>`);
             return buttons.join(' ');
+        }
+        if (job.video_url) {
+            return `<a href="${escapeHtml(job.video_url)}" class="btn-small btn-primary" download>다운로드</a>`;
         }
         if (job.status === 'preview_ready' || job.status === 'awaiting_confirmation') {
             return `<a href="/static/preview.html?job=${escapeHtml(job.job_id)}" class="btn-small btn-secondary">미리보기</a>`;
